@@ -1,0 +1,67 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+
+name: Verify
+
+on:
+  workflow_call:
+    inputs:
+      os-matrix:
+        description: 'os matrix as json array'
+        default: '[ "ubuntu-latest", "windows-latest", "macOS-latest" ]'
+        type: string
+
+      jdk-matrix:
+        description: 'jdk matrix as json array'
+        default: '[ "8", "11", "17" ]'
+        type: string
+
+      matrix-exclude:
+        description: 'exclude for matrix as json'
+        default: '[]'
+        type: string
+
+jobs:
+
+  verify:
+    name: ${{ matrix.os }} jdk-${{ matrix.jdk }}
+
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: true
+      matrix:
+        os:       ${{ fromJSON( inputs.os-matrix ) }}
+        jdk:      ${{ fromJSON( inputs.jdk-matrix ) }}
+        exclude:  ${{ fromJSON( inputs.matrix-exclude ) }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2.3.4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v2.3.1
+        with:
+          java-version: ${{ matrix.jdk }}
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Build with Maven
+        run: mvn --errors --batch-mode --show-version -P run-its -D"invoker.streamLogsOnFailures" verify
+
+      - name: Build Maven Site
+        run: mvn --errors --batch-mode --show-version site
