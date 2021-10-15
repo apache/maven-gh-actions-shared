@@ -8,12 +8,7 @@ Create GitHub workflow in project with content:
 ```yaml
 name: Verify
 
-on:
-  push:
-    branches-ignore:
-      - dependabot/**
-
-  pull_request:
+on: [push, pull_request]
 
 jobs:
   build:
