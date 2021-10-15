@@ -92,7 +92,7 @@ jobs:
           cache: 'maven'
 
       - name: Build with Maven
-        run: mvn --errors --batch-mode --show-version -P run-its -D"invoker.streamLogsOnFailures" verify
+        run: mvn ${{ inputs.maven_args }}
 
       - name: Build Maven Site
-        run: mvn ${{ inputs.maven_args }}
+        run: mvn ${{ inputs.maven_args }} site
