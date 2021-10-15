@@ -62,7 +62,7 @@ jobs:
 
   verify:
     needs: build
-    name: ${{ matrix.os }} jdk-${{ matrix.jdk }}
+    name: ${{ matrix.os }} jdk-${{ matrix.jdk }}-${{ matrix.distribution }}
 
     runs-on: ${{ matrix.os }}
 
