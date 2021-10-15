@@ -35,9 +35,33 @@ on:
         default: '[]'
         type: string
 
+      jdk-distribution-matrix:
+        description: "jdk distribution matrix"
+        default: '[ "temurin" ]'
+        type: string
+
 jobs:
 
+  build:
+    name: fail-fast-build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2.3.4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v2.3.1
+        with:
+          java-version: 8
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Build with Maven
+        run: mvn --errors --batch-mode --show-version -P run-its -D"invoker.streamLogsOnFailures" verify
+
   verify:
+    needs: build
     name: ${{ matrix.os }} jdk-${{ matrix.jdk }}
 
     runs-on: ${{ matrix.os }}
@@ -47,6 +71,7 @@ jobs:
       matrix:
         os:       ${{ fromJSON( inputs.os-matrix ) }}
         jdk:      ${{ fromJSON( inputs.jdk-matrix ) }}
+        distribution:      ${{ fromJSON( inputs.jdk-distribution-matrix ) }}
         exclude:  ${{ fromJSON( inputs.matrix-exclude ) }}
 
     steps:
@@ -57,7 +82,7 @@ jobs:
         uses: actions/setup-java@v2.3.1
         with:
           java-version: ${{ matrix.jdk }}
-          distribution: 'temurin'
+          distribution: ${{ matrix.distribution }}
           cache: 'maven'
 
       - name: Build with Maven
