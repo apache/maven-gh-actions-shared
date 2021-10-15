@@ -20,6 +20,12 @@ name: Verify
 on:
   workflow_call:
     inputs:
+      maven_args:
+        description: The arguments to pass to Maven when building the code
+        required: false
+        default: --errors --batch-mode --show-version -P run-its -D"invoker.streamLogsOnFailures" verify
+        type: string
+
       os-matrix:
         description: 'os matrix as json array'
         default: '[ "ubuntu-latest", "windows-latest", "macOS-latest" ]'
@@ -89,4 +95,4 @@ jobs:
         run: mvn --errors --batch-mode --show-version -P run-its -D"invoker.streamLogsOnFailures" verify
 
       - name: Build Maven Site
-        run: mvn --errors --batch-mode --show-version site
+        run: mvn ${{ inputs.maven_args }}
