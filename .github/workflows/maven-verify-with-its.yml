@@ -23,7 +23,7 @@ on:
       maven_args:
         description: The arguments to pass to Maven when building the code
         required: false
-        default: --errors --batch-mode --show-version -P run-its -D"invoker.streamLogsOnFailures" verify
+        default: --errors --batch-mode --show-version -P run-its -D"invoker.streamLogsOnFailures"
         type: string
 
       os-matrix:
@@ -92,7 +92,7 @@ jobs:
           cache: 'maven'
 
       - name: Build with Maven
-        run: mvn ${{ inputs.maven_args }}
+        run: mvn ${{ inputs.maven_args }} verify
 
       - name: Build Maven Site
         run: mvn ${{ inputs.maven_args }} site
