@@ -64,7 +64,7 @@ jobs:
           cache: 'maven'
 
       - name: Build with Maven
-        run: mvn ${{ inputs.maven_args }}
+        run: mvn ${{ inputs.maven_args }} verify
 
   verify:
     needs: build
