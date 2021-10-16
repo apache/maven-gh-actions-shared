@@ -28,29 +28,62 @@ on:
 
       os-matrix:
         description: 'os matrix as json array'
+        required: false
         default: '[ "ubuntu-latest", "windows-latest", "macOS-latest" ]'
         type: string
 
       jdk-matrix:
         description: 'jdk matrix as json array'
+        required: false
         default: '[ "8", "11", "17" ]'
         type: string
 
       matrix-exclude:
         description: 'exclude for matrix as json'
+        required: false
         default: '[]'
         type: string
 
       jdk-distribution-matrix:
         description: "jdk distribution matrix"
+        required: false
         default: '[ "temurin" ]'
         type: string
 
 jobs:
 
-  build:
-    name: fail-fast-build
+  setup:
+    name: Setup
     runs-on: ubuntu-latest
+
+    outputs:
+      ff-os: ${{ steps.setup.outputs.ff-os }}
+      ff-jdk: ${{ steps.setup.outputs.ff-jdk }}
+      ff-jdk-distribution: ${{ steps.setup.outputs.ff-jdk-distribution }}
+      ff-excludes: ${{ steps.excludes.outputs.ff-excludes }}
+
+    steps:
+      # get first items from matrix for fail-fast
+      - id: setup
+        run: |
+          echo '::set-output name=ff-os::${{ fromJSON( inputs.os-matrix )[0] }}'
+          echo '::set-output name=ff-jdk::${{ fromJSON( inputs.jdk-matrix )[0] }}'
+          echo '::set-output name=ff-jdk-distribution::${{ fromJSON( inputs.jdk-distribution-matrix )[0] }}'
+
+      # prepare excludes for verify matrix in order to not run the same build twice
+      - id: excludes
+        run: |
+          EXCLUDES=$(echo '${{ inputs.matrix-exclude }}' | jq -rc '. + [{
+            "os": "${{ steps.setup.outputs.ff-os }}",
+            "jdk": "${{ steps.setup.outputs.ff-jdk }}",
+            "distribution": "${{ steps.setup.outputs.ff-jdk-distribution }}"
+          }]')
+          echo "::set-output name=ff-excludes::$EXCLUDES"
+
+  build:
+    needs: setup
+    name: ${{ needs.setup.outputs.ff-os }} jdk-${{ needs.setup.outputs.ff-jdk }}-${{ needs.setup.outputs.ff-jdk-distribution }}
+    runs-on: ${{ needs.setup.outputs.ff-os }}
 
     steps:
       - name: Checkout
@@ -59,15 +92,15 @@ jobs:
       - name: Set up JDK
         uses: actions/setup-java@v2.3.1
         with:
-          java-version: 8
-          distribution: 'temurin'
+          java-version: ${{ needs.setup.outputs.ff-jdk }}
+          distribution: ${{ needs.setup.outputs.ff-jdk-distribution }}
           cache: 'maven'
 
       - name: Build with Maven
         run: mvn ${{ inputs.maven_args }} verify
 
   verify:
-    needs: build
+    needs: [ setup, build ]
     name: ${{ matrix.os }} jdk-${{ matrix.jdk }}-${{ matrix.distribution }}
 
     runs-on: ${{ matrix.os }}
@@ -75,10 +108,10 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        os:       ${{ fromJSON( inputs.os-matrix ) }}
-        jdk:      ${{ fromJSON( inputs.jdk-matrix ) }}
-        distribution:      ${{ fromJSON( inputs.jdk-distribution-matrix ) }}
-        exclude:  ${{ fromJSON( inputs.matrix-exclude ) }}
+        os: ${{ fromJSON( inputs.os-matrix ) }}
+        jdk: ${{ fromJSON( inputs.jdk-matrix ) }}
+        distribution: ${{ fromJSON( inputs.jdk-distribution-matrix ) }}
+        exclude: ${{ fromJSON( needs.setup.outputs.ff-excludes ) }}
 
     steps:
       - name: Checkout
