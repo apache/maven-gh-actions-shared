@@ -33,7 +33,7 @@ on:
 jobs:
   build:
     name: Verify
-    uses: apache/maven-gh-actions-shared/.github/workflows/maven-verify-with-its.yml@main
+    uses: apache/maven-gh-actions-shared/.github/workflows/maven-verify.yml@v1
 
 ```
 
@@ -41,7 +41,7 @@ Excludes from build matrix:
 
 ```yaml
 ...
-    uses: apache/maven-gh-actions-shared/.github/workflows/maven-verify-with-its.yml@main
+    uses: apache/maven-gh-actions-shared/.github/workflows/maven-verify.yml@v1
     with:
       matrix-exclude: >
         [ 
