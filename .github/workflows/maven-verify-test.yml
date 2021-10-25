@@ -15,7 +15,7 @@
 # specific language governing permissions and limitations
 # under the License.
 
-name: Verify
+name: Verify - Test
 
 on: push
 
@@ -23,4 +23,4 @@ jobs:
   build:
     name: Verify
     # for testing purpose you can change to your fork and branch
-    uses: apache/maven-gh-actions-shared/.github/workflows/maven-verify-with-its.yml@main
+    uses: apache/maven-gh-actions-shared/.github/workflows/maven-verify.yml@v1
