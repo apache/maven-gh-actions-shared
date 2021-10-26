@@ -15,9 +15,12 @@
 # specific language governing permissions and limitations
 # under the License.
 
-name: Verify
+name: Verify Test - main
 
-on: push
+on:
+  push:
+    branches:
+    - main
 
 jobs:
   build:
