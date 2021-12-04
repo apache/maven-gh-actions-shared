@@ -20,7 +20,17 @@ name: Verify - Test
 on: push
 
 jobs:
-  build:
-    name: Verify
+
+  verify-1:
+    name: Verify 1
     # for testing purpose you can change to your fork and branch
     uses: apache/maven-gh-actions-shared/.github/workflows/maven-verify.yml@v1
+
+  verify-2:
+    name: Verify 2
+    # for testing purpose you can change to your fork and branch
+    uses: apache/maven-gh-actions-shared/.github/workflows/maven-verify.yml@v1
+    with:
+      ff-goal: test
+      verify-goal: clean install
+      verify-fail-fast: false
