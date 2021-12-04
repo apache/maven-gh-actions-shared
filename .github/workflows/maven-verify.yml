@@ -21,9 +21,9 @@ on:
   workflow_call:
     inputs:
       maven_args:
-        description: The arguments to pass to Maven when building the code
+        description: The arguments to pass to all Maven commands when building the code
         required: false
-        default: -P run-its -D"invoker.streamLogsOnFailures"
+        default: '-D"invoker.streamLogsOnFailures"'
         type: string
 
       os-matrix:
@@ -69,6 +69,31 @@ on:
         default: 'temurin'
         type: string
 
+      ff-goal:
+        description: The Maven goal used by fail-fast-build job
+        required: false
+        default: '-P run-its verify'
+        type: string
+
+      verify-goal:
+        description: The Maven goal used by verfy jobs
+        required: false
+        default: '-P run-its verify'
+        type: string
+
+      verify-site-goal:
+        description: The Maven goal used by verfy jobs to build site
+        required: false
+        default: '-P run-its site'
+        type: string
+
+      verify-fail-fast:
+        description: Determinate if verification matrix should fail fast
+        required: false
+        default: true
+        type: boolean
+
+
 jobs:
 
   # verify build on one node - before matrix will start
@@ -90,7 +115,7 @@ jobs:
           cache: 'maven'
 
       - name: Build with Maven
-        run: mvn --errors --batch-mode --show-version ${{ inputs.maven_args }} verify
+        run: mvn --errors --batch-mode --show-version ${{ inputs.maven_args }} ${{ inputs.ff-goal }}
 
   verify:
     needs: fail-fast-build
@@ -99,7 +124,7 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     strategy:
-      fail-fast: true
+      fail-fast: ${{ inputs.verify-fail-fast }}
       matrix:
         os: ${{ fromJSON( inputs.os-matrix ) }}
         jdk: ${{ fromJSON( inputs.jdk-matrix ) }}
@@ -112,7 +137,8 @@ jobs:
         if: >
           matrix.os != inputs.ff-os ||
           matrix.jdk != inputs.ff-jdk ||
-          matrix.distribution != inputs.ff-jdk-distribution
+          matrix.distribution != inputs.ff-jdk-distribution ||
+          inputs.verify-goal != inputs.ff-goal
         run: echo ok
 
       - name: Checkout
@@ -131,8 +157,8 @@ jobs:
 
       - name: Build with Maven
         if: steps.should-run.conclusion == 'success'
-        run: mvn --errors --batch-mode --show-version ${{ inputs.maven_args }} verify
+        run: mvn --errors --batch-mode --show-version ${{ inputs.maven_args }} ${{ inputs.verify-goal }}
 
       - name: Build Maven Site
         if: steps.should-run.conclusion == 'success'
-        run: mvn --errors --batch-mode --show-version ${{ inputs.maven_args }} site
+        run: mvn --errors --batch-mode --show-version ${{ inputs.maven_args }} ${{ inputs.verify-site-goal }}
