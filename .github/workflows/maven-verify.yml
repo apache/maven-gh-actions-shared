@@ -75,6 +75,12 @@ on:
         default: '-P run-its verify'
         type: string
 
+      ff-site-goal:
+        description: The Maven goal used by fail-fast-build job to build site
+        required: false
+        default: '-DskipTests -P reporting site'
+        type: string
+
       verify-goal:
         description: The Maven goal used by verfy jobs
         required: false
@@ -84,7 +90,7 @@ on:
       verify-site-goal:
         description: The Maven goal used by verfy jobs to build site
         required: false
-        default: '-P run-its site'
+        default: '-DskipTests -P reporting site'
         type: string
 
       verify-fail-fast:
@@ -117,6 +123,10 @@ jobs:
       - name: Build with Maven
         run: mvn --errors --batch-mode --show-version ${{ inputs.maven_args }} ${{ inputs.ff-goal }}
 
+      - name: Build Maven Site
+        run: mvn --errors --batch-mode --show-version ${{ inputs.maven_args }} ${{ inputs.ff-site-goal }}
+
+
   verify:
     needs: fail-fast-build
     name: ${{ matrix.os }} jdk-${{ matrix.jdk }}-${{ matrix.distribution }}
@@ -138,7 +148,8 @@ jobs:
           matrix.os != inputs.ff-os ||
           matrix.jdk != inputs.ff-jdk ||
           matrix.distribution != inputs.ff-jdk-distribution ||
-          inputs.verify-goal != inputs.ff-goal
+          inputs.verify-goal != inputs.ff-goal ||
+          inputs.verify-site-goal != inputs.ff-site-goal
         run: echo ok
 
       - name: Checkout
