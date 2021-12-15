@@ -118,8 +118,7 @@ jobs:
         with:
           java-version: ${{ inputs.ff-jdk }}
           distribution: ${{ inputs.ff-jdk-distribution }}
-# temporary disable cache - gh issue
-#          cache: 'maven'
+          cache: 'maven'
 
       - name: Build with Maven
         run: mvn --errors --batch-mode --show-version ${{ inputs.maven_args }} ${{ inputs.ff-goal }}
