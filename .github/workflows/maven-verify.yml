@@ -26,6 +26,12 @@ on:
         default: '-D"invoker.streamLogsOnFailures"'
         type: string
 
+      maven_version:
+        description: The Maven version used for builds
+        required: false
+        default: '3.8.4'
+        type: string
+
       os-matrix:
         description: 'os matrix as json array'
         required: false
@@ -120,8 +126,11 @@ jobs:
           distribution: ${{ inputs.ff-jdk-distribution }}
           cache: 'maven'
 
+      - name: Set up Maven
+        run: mvn --errors --batch-mode --show-version wrapper:wrapper "-Dmaven=${{ inputs.maven_version }}"
+
       - name: Build with Maven
-        run: mvn --errors --batch-mode --show-version ${{ inputs.maven_args }} ${{ inputs.ff-goal }}
+        run: ./mvnw --errors --batch-mode --show-version ${{ inputs.maven_args }} ${{ inputs.ff-goal }}
 
       - name: Build Maven Site
         run: mvn --errors --batch-mode --show-version ${{ inputs.maven_args }} ${{ inputs.ff-site-goal }}
@@ -166,10 +175,14 @@ jobs:
           distribution: ${{ matrix.distribution }}
           cache: 'maven'
 
+      - name: Set up Maven
+        if: steps.should-run.conclusion == 'success'
+        run: mvn --errors --batch-mode --show-version wrapper:wrapper "-Dmaven=${{ inputs.maven_version }}"
+
       - name: Build with Maven
         if: steps.should-run.conclusion == 'success'
-        run: mvn --errors --batch-mode --show-version ${{ inputs.maven_args }} ${{ inputs.verify-goal }}
+        run: ./mvnw --errors --batch-mode --show-version ${{ inputs.maven_args }} ${{ inputs.verify-goal }}
 
       - name: Build Maven Site
         if: steps.should-run.conclusion == 'success'
-        run: mvn --errors --batch-mode --show-version ${{ inputs.maven_args }} ${{ inputs.verify-site-goal }}
+        run: ./mvnw --errors --batch-mode --show-version ${{ inputs.maven_args }} ${{ inputs.verify-site-goal }}
