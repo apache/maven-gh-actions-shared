@@ -133,7 +133,7 @@ jobs:
         run: ./mvnw --errors --batch-mode --show-version ${{ inputs.maven_args }} ${{ inputs.ff-goal }}
 
       - name: Build Maven Site
-        run: mvn --errors --batch-mode --show-version ${{ inputs.maven_args }} ${{ inputs.ff-site-goal }}
+        run: ./mvnw --errors --batch-mode --show-version ${{ inputs.maven_args }} ${{ inputs.ff-site-goal }}
 
 
   verify:
