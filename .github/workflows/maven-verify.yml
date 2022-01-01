@@ -112,6 +112,8 @@ jobs:
   fail-fast-build:
     name: ${{ inputs.ff-os }} jdk-${{ inputs.ff-jdk }}-${{ inputs.ff-jdk-distribution }}
     runs-on: ${{ inputs.ff-os }}
+    # execute on any push or pull request from forked repo
+    if: github.event_name == 'push' || ( github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork )
 
     steps:
       - name: Checkout
