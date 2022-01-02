@@ -146,7 +146,7 @@ jobs:
         if: failure() && inputs.failure-upload-path != ''
         with:
           name: failure-${{ inputs.ff-os }}-${{ inputs.ff-jdk }}-${{ inputs.ff-jdk-distribution }}
-          path: $${ inputs.failure-upload-path }}
+          path: ${{ inputs.failure-upload-path }}
 
   verify:
     needs: fail-fast-build
@@ -204,4 +204,4 @@ jobs:
         if: steps.should-run.conclusion == 'success' && failure() && inputs.failure-upload-path != ''
         with:
           name: failure-${{ matrix.os }}-${{ matrix.jdk }}-${{ matrix.distribution }}
-          path: $${ inputs.failure-upload-path }}
+          path: ${{ inputs.failure-upload-path }}
