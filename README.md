@@ -49,22 +49,46 @@ name: Verify
 
 on:
   push:
-    branches-ignore:
-      - dependabot/**
   pull_request:
 
 jobs:
   build:
     name: Verify
-    uses: apache/maven-gh-actions-shared/.github/workflows/maven-verify.yml@v1
+    uses: apache/maven-gh-actions-shared/.github/workflows/maven-verify.yml@v2
 
 ```
+## Events that can trigger workflows
 
-Excludes from build matrix:
+In such configuration workflow can be executed in the same time twice for two separate events.
+
+It can occurs when we create PR for branch from the same repository, we have two events:
+- `push` on branch
+- `pull_request` on PR for the same branch
+
+In order to minimize resource consumptions shared workflow from version `v2` 
+detect such situation and skips the execution for `pull_request` event 
+if `PR` is created for local branch.
+
+Only workflow for PR from external forks will be executed.
+
+# Additional configurations
+
+## Attach logs on failure
+
+We can store some logs of execution in case of failure as workflow attachments:
 
 ```yaml
 ...
-    uses: apache/maven-gh-actions-shared/.github/workflows/maven-verify.yml@v1
+    uses: apache/maven-gh-actions-shared/.github/workflows/maven-verify.yml@v2
+    with:
+      failure-upload-path: |
+        **/target/surefire-reports/*
+```
+## Excludes from build matrix:
+
+```yaml
+...
+    uses: apache/maven-gh-actions-shared/.github/workflows/maven-verify.yml@v2
     with:
       matrix-exclude: >
         [ 
@@ -73,6 +97,22 @@ Excludes from build matrix:
           {"jdk": "8", "os": "windows-latest"} # exclude jkd 8 on windows
         ]
 ```
+
+## Change default goals
+
+```yaml
+...
+    uses: apache/maven-gh-actions-shared/.github/workflows/maven-verify.yml@v2
+    with:
+      ff-goal: 'install'
+      verify-goal: 'install -P run-its'
+```
+
+## More options
+
+More options with default values can be found in workflow source in `inputs` section:
+
+https://github.com/apache/maven-gh-actions-shared/blob/v2/.github/workflows/maven-verify.yml
 
 # Resources
 
