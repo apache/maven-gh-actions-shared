@@ -105,6 +105,10 @@ on:
         default: true
         type: boolean
 
+      failure-upload-path:
+        description: A file, directory or wildcard pattern that describes what to upload on failure
+        required: false
+        type: string
 
 jobs:
 
@@ -137,6 +141,12 @@ jobs:
       - name: Build Maven Site
         run: ./mvnw --errors --batch-mode --show-version ${{ inputs.maven_args }} ${{ inputs.ff-site-goal }}
 
+      - name: Upload artifact on failure
+        uses: actions/upload-artifact@v2.3.1
+        if: failure() && inputs.failure-upload-path != ''
+        with:
+          name: failure-${{ inputs.ff-os }}-${{ inputs.ff-jdk }}-${{ inputs.ff-jdk-distribution }}
+          path: $${ inputs.failure-upload-path }}
 
   verify:
     needs: fail-fast-build
@@ -188,3 +198,10 @@ jobs:
       - name: Build Maven Site
         if: steps.should-run.conclusion == 'success'
         run: ./mvnw --errors --batch-mode --show-version ${{ inputs.maven_args }} ${{ inputs.verify-site-goal }}
+
+      - name: Upload artifact on failure
+        uses: actions/upload-artifact@v2.3.1
+        if: steps.should-run.conclusion == 'success' && failure() && inputs.failure-upload-path != ''
+        with:
+          name: failure-${{ matrix.os }}-${{ matrix.jdk }}-${{ matrix.distribution }}
+          path: $${ inputs.failure-upload-path }}
