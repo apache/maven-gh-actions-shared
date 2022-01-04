@@ -120,6 +120,10 @@ jobs:
     if: github.event_name == 'push' || ( github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork )
 
     steps:
+      - name: Show free disk space
+        run: df -h
+        shell: bash
+
       - name: Checkout
         uses: actions/checkout@v2.4.0
         with:
@@ -148,6 +152,11 @@ jobs:
           name: failure-${{ inputs.ff-os }}-${{ inputs.ff-jdk }}-${{ inputs.ff-jdk-distribution }}
           path: ${{ inputs.failure-upload-path }}
 
+      - name: Show free disk space
+        if: always()
+        run: df -h
+        shell: bash
+
   verify:
     needs: fail-fast-build
     name: ${{ matrix.os }} jdk-${{ matrix.jdk }}-${{ matrix.distribution }}
@@ -172,6 +181,11 @@ jobs:
           inputs.verify-goal != inputs.ff-goal ||
           inputs.verify-site-goal != inputs.ff-site-goal
         run: echo ok
+
+      - name: Show free disk space
+        if: steps.should-run.conclusion == 'success'
+        run: df -h
+        shell: bash
 
       - name: Checkout
         if: steps.should-run.conclusion == 'success'
@@ -205,3 +219,8 @@ jobs:
         with:
           name: failure-${{ matrix.os }}-${{ matrix.jdk }}-${{ matrix.distribution }}
           path: ${{ inputs.failure-upload-path }}
+
+      - name: Show free disk space
+        if: steps.should-run.conclusion == 'success' && always()
+        run: df -h
+        shell: bash
