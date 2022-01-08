@@ -50,6 +50,18 @@ on:
         default: '[]'
         type: string
 
+      max-parallel:
+        description: 'max parallel jobs'
+        required: false
+        default: 100
+        type: number
+
+      timeout-minutes:
+        description: 'timeout-minutes used by the builds (defaults to 360)'
+        required: false
+        default: 360
+        type: number
+
       jdk-distribution-matrix:
         description: "jdk distribution matrix"
         required: false
@@ -87,6 +99,12 @@ on:
         default: '-DskipTests -P reporting site'
         type: string
 
+      ff-timeout-minutes:
+        description: 'timeout-minutes used by fail-fast-build jobs (defaults to 360)'
+        required: false
+        default: 360
+        type: number
+
       verify-goal:
         description: The Maven goal used by verfy jobs
         required: false
@@ -116,6 +134,7 @@ jobs:
   fail-fast-build:
     name: ${{ inputs.ff-os }} jdk-${{ inputs.ff-jdk }}-${{ inputs.ff-jdk-distribution }}
     runs-on: ${{ inputs.ff-os }}
+    timeout-minutes: ${{ inputs.ff-timeout-minutes }}
     # execute on any push or pull request from forked repo
     if: github.event_name == 'push' || ( github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork )
 
@@ -160,7 +179,7 @@ jobs:
   verify:
     needs: fail-fast-build
     name: ${{ matrix.os }} jdk-${{ matrix.jdk }}-${{ matrix.distribution }}
-
+    timeout-minutes: ${{ inputs.timeout-minutes }}
     runs-on: ${{ matrix.os }}
 
     strategy:
@@ -170,6 +189,7 @@ jobs:
         jdk: ${{ fromJSON( inputs.jdk-matrix ) }}
         distribution: ${{ fromJSON( inputs.jdk-distribution-matrix ) }}
         exclude: ${{ fromJSON( inputs.matrix-exclude ) }}
+      max-parallel: ${{ inputs.max-parallel }}
 
     steps:
       - name: Should run
