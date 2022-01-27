@@ -128,6 +128,11 @@ on:
         required: false
         type: string
 
+# allow single build per branch or PR
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
 
   # verify build on one node - before matrix will start
