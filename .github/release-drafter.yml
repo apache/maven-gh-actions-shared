@@ -73,3 +73,7 @@ exclude-labels:
 template: |
   <!-- Optional: add a release summary here -->
   $CHANGES
+  
+replacers:
+  - search: '/\[(\d+)-(\d+)\]*\s*-*\s*/g'
+    replace: '[$1-$2](https://issues.apache.org/jira/browse/$1-$2) - '  
