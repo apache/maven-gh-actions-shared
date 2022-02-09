@@ -47,7 +47,7 @@ categories:
       - fix
       - bugfix
       - regression
-  - title: ":construction_worker: Changes for plugin developers"
+  - title: ":construction_worker: Changes for developers"
     labels:
       - developer 
   # Default label used by Dependabot
@@ -60,6 +60,8 @@ categories:
       - chore
       - internal
       - maintenance
+  - title: 🔧 Build
+    label: build      
   - title: 🚦 Tests
     labels: 
       - test
