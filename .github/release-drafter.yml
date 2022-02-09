@@ -76,4 +76,4 @@ template: |
   
 replacers:
   - search: '/\[(.*)-(\d+)\]*\s*-*\s*/g'
-    replace: '[[$1-$2]](https://issues.apache.org/jira/browse/$1-$2 target="_blank") - '  
+    replace: '[[$1-$2]](https://issues.apache.org/jira/browse/$1-$2) - '  
