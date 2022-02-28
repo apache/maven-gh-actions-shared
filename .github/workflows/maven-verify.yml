@@ -154,7 +154,7 @@ jobs:
           persist-credentials: false
 
       - name: Set up JDK
-        uses: actions/setup-java@v2.5.0
+        uses: actions/setup-java@v3
         with:
           java-version: ${{ inputs.ff-jdk }}
           distribution: ${{ inputs.ff-jdk-distribution }}
@@ -220,7 +220,7 @@ jobs:
 
       - name: Set up JDK
         if: steps.should-run.conclusion == 'success'
-        uses: actions/setup-java@v2.5.0
+        uses: actions/setup-java@v3
         with:
           java-version: ${{ matrix.jdk }}
           distribution: ${{ matrix.distribution }}
