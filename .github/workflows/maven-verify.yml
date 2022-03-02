@@ -149,7 +149,7 @@ jobs:
         shell: bash
 
       - name: Checkout
-        uses: actions/checkout@v2.4.0
+        uses: actions/checkout@v3
         with:
           persist-credentials: false
 
@@ -214,7 +214,7 @@ jobs:
 
       - name: Checkout
         if: steps.should-run.conclusion == 'success'
-        uses: actions/checkout@v2.4.0
+        uses: actions/checkout@v3
         with:
           persist-credentials: false
 
