@@ -170,7 +170,7 @@ jobs:
         run: ./mvnw --errors --batch-mode --show-version ${{ inputs.maven_args }} ${{ inputs.ff-site-goal }}
 
       - name: Upload artifact on failure
-        uses: actions/upload-artifact@v2.3.1
+        uses: actions/upload-artifact@v3
         if: failure() && inputs.failure-upload-path != ''
         with:
           name: failure-${{ inputs.ff-os }}-${{ inputs.ff-jdk }}-${{ inputs.ff-jdk-distribution }}
@@ -239,7 +239,7 @@ jobs:
         run: ./mvnw --errors --batch-mode --show-version ${{ inputs.maven_args }} ${{ inputs.verify-site-goal }}
 
       - name: Upload artifact on failure
-        uses: actions/upload-artifact@v2.3.1
+        uses: actions/upload-artifact@v3
         if: steps.should-run.conclusion == 'success' && failure() && inputs.failure-upload-path != ''
         with:
           name: failure-${{ matrix.os }}-${{ matrix.jdk }}-${{ matrix.distribution }}
