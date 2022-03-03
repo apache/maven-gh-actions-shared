@@ -169,11 +169,17 @@ jobs:
       - name: Build Maven Site
         run: ./mvnw --errors --batch-mode --show-version ${{ inputs.maven_args }} ${{ inputs.ff-site-goal }}
 
+      - name: Upload Maven Site
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ github.run_number }}-site-${{ inputs.ff-os }}-${{ inputs.ff-jdk }}-${{ inputs.ff-jdk-distribution }}
+          path: '**/target/site/**'
+
       - name: Upload artifact on failure
         uses: actions/upload-artifact@v3
         if: failure() && inputs.failure-upload-path != ''
         with:
-          name: failure-${{ inputs.ff-os }}-${{ inputs.ff-jdk }}-${{ inputs.ff-jdk-distribution }}
+          name: ${{ github.run_number }}-failure-${{ inputs.ff-os }}-${{ inputs.ff-jdk }}-${{ inputs.ff-jdk-distribution }}
           path: ${{ inputs.failure-upload-path }}
 
       - name: Show free disk space
@@ -234,15 +240,11 @@ jobs:
         if: steps.should-run.conclusion == 'success'
         run: ./mvnw --errors --batch-mode --show-version ${{ inputs.maven_args }} ${{ inputs.verify-goal }}
 
-      - name: Build Maven Site
-        if: steps.should-run.conclusion == 'success'
-        run: ./mvnw --errors --batch-mode --show-version ${{ inputs.maven_args }} ${{ inputs.verify-site-goal }}
-
       - name: Upload artifact on failure
         uses: actions/upload-artifact@v3
         if: steps.should-run.conclusion == 'success' && failure() && inputs.failure-upload-path != ''
         with:
-          name: failure-${{ matrix.os }}-${{ matrix.jdk }}-${{ matrix.distribution }}
+          name: ${{ github.run_number }}-failure-${{ matrix.os }}-${{ matrix.jdk }}-${{ matrix.distribution }}
           path: ${{ inputs.failure-upload-path }}
 
       - name: Show free disk space
