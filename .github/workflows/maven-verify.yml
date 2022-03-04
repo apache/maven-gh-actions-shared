@@ -173,7 +173,9 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: ${{ github.run_number }}-site-${{ inputs.ff-os }}-${{ inputs.ff-jdk }}-${{ inputs.ff-jdk-distribution }}
-          path: '**/target/site/**'
+          path: |
+            **/target/site/**
+            !**/target/it/**
 
       - name: Upload artifact on failure
         uses: actions/upload-artifact@v3
