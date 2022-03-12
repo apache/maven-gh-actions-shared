@@ -96,7 +96,7 @@ on:
       ff-site-goal:
         description: The Maven goal used by fail-fast-build job to build site
         required: false
-        default: '-DskipTests -P reporting site'
+        default: '-DskipTests -P reporting site site:stage'
         type: string
 
       ff-timeout-minutes:
@@ -174,8 +174,7 @@ jobs:
         with:
           name: ${{ github.run_number }}-site-${{ inputs.ff-os }}-${{ inputs.ff-jdk }}-${{ inputs.ff-jdk-distribution }}
           path: |
-            **/target/site/**
-            !**/target/it/**
+            target/staging/**
 
       - name: Upload artifact on failure
         uses: actions/upload-artifact@v3
