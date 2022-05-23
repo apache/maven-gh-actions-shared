@@ -221,7 +221,6 @@ jobs:
       - name: Ensure all needed tools are installed (macOS)
         if: steps.should-run.conclusion == 'success' && matrix.os == 'macOS-latest'
         run: |
-          brew update
           brew install mercurial
 
       - name: Show free disk space
