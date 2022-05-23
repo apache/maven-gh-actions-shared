@@ -214,6 +214,15 @@ jobs:
           inputs.verify-site-goal != inputs.ff-site-goal
         run: echo ok
 
+      # Some projects (like Maven SCM) need the command-line tools for all SCMs installed.
+      # Git and Subversion are installed on all by default.
+      # Mercurial is not installed on macOS.
+      # https://docs.github.com/en/actions/using-github-hosted-runners/customizing-github-hosted-runners#installing-software-on-macos-runners
+      - name: Ensure all needed tools are installed (macOS)
+        if: steps.should-run.conclusion == 'success' && matrix.os == 'macOS-latest'
+        run: |
+          brew install mercurial
+
       - name: Show free disk space
         if: steps.should-run.conclusion == 'success'
         run: df -h
