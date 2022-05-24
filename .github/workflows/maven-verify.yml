@@ -128,6 +128,12 @@ on:
         required: false
         type: string
 
+      install-mercurial:
+        description: Ensure all build images have Mercurial(hg) installed
+        required: false
+        default: false
+        type: boolean
+
 # allow single build per branch or PR
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -218,8 +224,11 @@ jobs:
       # Git and Subversion are installed on all by default.
       # Mercurial is not installed on macOS.
       # https://docs.github.com/en/actions/using-github-hosted-runners/customizing-github-hosted-runners#installing-software-on-macos-runners
-      - name: Ensure all needed tools are installed (macOS)
-        if: steps.should-run.conclusion == 'success' && matrix.os == 'macOS-latest'
+      - name: Install Mercurial (hg) on macOS
+        if: >
+          inputs.install-mercurial && 
+          steps.should-run.conclusion == 'success' && 
+          matrix.os == 'macOS-latest'
         run: |
           brew install mercurial
 
