@@ -212,7 +212,8 @@ jobs:
     name: ${{ matrix.os }} jdk-${{ matrix.jdk }}-${{ matrix.distribution }}
     timeout-minutes: ${{ inputs.timeout-minutes }}
     runs-on: ${{ matrix.os }}
-
+    if: always() && ( !inputs.ff-run || needs.fail-fast-build.result == 'success' )
+ 
     strategy:
       fail-fast: ${{ inputs.verify-fail-fast }}
       matrix:
