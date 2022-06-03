@@ -159,7 +159,7 @@ jobs:
     runs-on: ${{ inputs.ff-os }}
     timeout-minutes: ${{ inputs.ff-timeout-minutes }}
     # execute on any push or pull request from forked repo
-    if: ff-run && ( github.event_name == 'push' || ( github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork ) )
+    if: inputs.ff-run && ( github.event_name == 'push' || ( github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork ) )
 
     steps:
       - name: Show free disk space
@@ -186,7 +186,7 @@ jobs:
 
       - name: Build Maven Site
         run: ./mvnw --errors --batch-mode --show-version ${{ inputs.maven_args }} ${{ inputs.ff-site-goal }}
-        if: ff-site-run
+        if: inputs.ff-site-run
 
       - name: Upload Maven Site
         uses: actions/upload-artifact@v3
