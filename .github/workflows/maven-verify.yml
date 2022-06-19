@@ -69,6 +69,12 @@ on:
         type: string
 
       # fail fast job setup
+      ff-run:
+        description: Determines should fail-fast-build run at all
+        required: false
+        default: true
+        type: boolean
+
       ff-os:
         description: The os used during fail-fast-build job
         required: false
@@ -92,6 +98,12 @@ on:
         required: false
         default: '-P run-its verify'
         type: string
+
+      ff-site-run:
+        description: Determines should fail-fast-build run site step
+        required: false
+        default: true
+        type: boolean
 
       ff-site-goal:
         description: The Maven goal used by fail-fast-build job to build site
@@ -147,7 +159,7 @@ jobs:
     runs-on: ${{ inputs.ff-os }}
     timeout-minutes: ${{ inputs.ff-timeout-minutes }}
     # execute on any push or pull request from forked repo
-    if: github.event_name == 'push' || ( github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork )
+    if: inputs.ff-run && ( github.event_name == 'push' || ( github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork ) )
 
     steps:
       - name: Show free disk space
@@ -174,6 +186,7 @@ jobs:
 
       - name: Build Maven Site
         run: ./mvnw --errors --batch-mode --show-version ${{ inputs.maven_args }} ${{ inputs.ff-site-goal }}
+        if: inputs.ff-site-run
 
       - name: Upload Maven Site
         uses: actions/upload-artifact@v3
@@ -199,7 +212,8 @@ jobs:
     name: ${{ matrix.os }} jdk-${{ matrix.jdk }}-${{ matrix.distribution }}
     timeout-minutes: ${{ inputs.timeout-minutes }}
     runs-on: ${{ matrix.os }}
-
+    if: always() && ( !inputs.ff-run || needs.fail-fast-build.result == 'success' )
+ 
     strategy:
       fail-fast: ${{ inputs.verify-fail-fast }}
       matrix:
