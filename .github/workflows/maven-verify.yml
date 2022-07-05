@@ -273,7 +273,6 @@ jobs:
         if: steps.should-run.conclusion == 'success'
         run: ./mvnw --errors --batch-mode --show-version ${{ inputs.maven_args }} ${{ inputs.verify-goal }}
         
-
       - name: Clean Ensuring no file handle remains open on windows
         if: steps.should-run.conclusion == 'success'
         run: ./mvnw clean        
