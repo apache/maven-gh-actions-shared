@@ -54,7 +54,7 @@ on:
 jobs:
   build:
     name: Verify
-    uses: apache/maven-gh-actions-shared/.github/workflows/maven-verify.yml@v2
+    uses: apache/maven-gh-actions-shared/.github/workflows/maven-verify.yml@v3
 
 ```
 ## Events that can trigger workflows
@@ -71,6 +71,12 @@ if `PR` is created for local branch.
 
 Only workflow for PR from external forks will be executed.
 
+## Breaking changes in V3 
+
+ - replace `maven_version` by `maven-matrix` and `ff-maven`
+ - rename `maven_args` to `maven-args`
+ - remove not used `verify-site-goal`
+
 # Additional configurations
 
 ## Attach logs on failure
@@ -79,7 +85,7 @@ We can store some logs of execution in case of failure as workflow attachments:
 
 ```yaml
 ...
-    uses: apache/maven-gh-actions-shared/.github/workflows/maven-verify.yml@v2
+    uses: apache/maven-gh-actions-shared/.github/workflows/maven-verify.yml@v3
     with:
       failure-upload-path: |
         **/target/surefire-reports/*
@@ -88,7 +94,7 @@ We can store some logs of execution in case of failure as workflow attachments:
 
 ```yaml
 ...
-    uses: apache/maven-gh-actions-shared/.github/workflows/maven-verify.yml@v2
+    uses: apache/maven-gh-actions-shared/.github/workflows/maven-verify.yml@v3
     with:
       matrix-exclude: >
         [ 
@@ -102,17 +108,27 @@ We can store some logs of execution in case of failure as workflow attachments:
 
 ```yaml
 ...
-    uses: apache/maven-gh-actions-shared/.github/workflows/maven-verify.yml@v2
+    uses: apache/maven-gh-actions-shared/.github/workflows/maven-verify.yml@v3
     with:
       ff-goal: 'install'
       verify-goal: 'install -P run-its'
+```
+
+## Testing against different Maven versions
+
+```yaml
+...
+    uses: apache/maven-gh-actions-shared/.github/workflows/maven-verify.yml@v3
+    with:
+      ff-maven: "3.8.6"                     # Maven version for fail-fast-build
+      maven-matrix: '[ "3.2.5", "3.8.6" ]'  # Maven versions matrix for verify builds
 ```
 
 ## More options
 
 More options with default values can be found in workflow source in `inputs` section:
 
-https://github.com/apache/maven-gh-actions-shared/blob/v2/.github/workflows/maven-verify.yml
+https://github.com/apache/maven-gh-actions-shared/blob/v3/.github/workflows/maven-verify.yml
 
 # Resources
 
