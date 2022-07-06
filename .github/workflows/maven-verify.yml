@@ -187,6 +187,9 @@ jobs:
       - name: Build Maven Site
         run: ./mvnw --errors --batch-mode --show-version ${{ inputs.maven_args }} ${{ inputs.ff-site-goal }}
         if: inputs.ff-site-run
+        
+      - name: Clean Ensuring no file handle remains open on windows
+        run: ./mvnw clean --errors --batch-mode --show-version    
 
       - name: Upload Maven Site
         uses: actions/upload-artifact@v3
@@ -275,7 +278,7 @@ jobs:
         
       - name: Clean Ensuring no file handle remains open on windows
         if: steps.should-run.conclusion == 'success'
-        run: ./mvnw clean        
+        run: ./mvnw clean --errors --batch-mode --show-version       
 
       - name: Upload artifact on failure
         uses: actions/upload-artifact@v3
