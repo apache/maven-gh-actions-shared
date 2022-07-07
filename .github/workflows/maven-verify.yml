@@ -187,9 +187,6 @@ jobs:
       - name: Build Maven Site
         run: ./mvnw --errors --batch-mode --show-version ${{ inputs.maven_args }} ${{ inputs.ff-site-goal }}
         if: inputs.ff-site-run
-        
-      - name: Clean Ensuring no file handle remains open on windows
-        run: ./mvnw clean --errors --batch-mode --show-version    
 
       - name: Upload Maven Site
         uses: actions/upload-artifact@v3
@@ -209,6 +206,9 @@ jobs:
         if: always()
         run: df -h
         shell: bash
+
+      - name: Clean Ensuring no file handle remains open on windows
+        run: ./mvnw clean --errors --batch-mode --show-version
 
   verify:
     needs: fail-fast-build
@@ -275,10 +275,6 @@ jobs:
       - name: Build with Maven
         if: steps.should-run.conclusion == 'success'
         run: ./mvnw --errors --batch-mode --show-version ${{ inputs.maven_args }} ${{ inputs.verify-goal }}
-        
-      - name: Clean Ensuring no file handle remains open on windows
-        if: steps.should-run.conclusion == 'success'
-        run: ./mvnw clean --errors --batch-mode --show-version       
 
       - name: Upload artifact on failure
         uses: actions/upload-artifact@v3
@@ -291,3 +287,7 @@ jobs:
         if: steps.should-run.conclusion == 'success' && always()
         run: df -h
         shell: bash
+
+      - name: Clean Ensuring no file handle remains open on windows
+        if: steps.should-run.conclusion == 'success'
+        run: ./mvnw clean --errors --batch-mode --show-version
