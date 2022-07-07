@@ -172,11 +172,21 @@ jobs:
           persist-credentials: false
 
       - name: Set up JDK
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v2
         with:
           java-version: ${{ inputs.ff-jdk }}
           distribution: ${{ inputs.ff-jdk-distribution }}
           cache: 'maven'
+          
+      - name: List local repository content before running the build
+        if: always()
+        run: ls -alrt ~/.m2/
+        shell: bash     
+        
+      - name: cat settings
+        if: always()
+        run: cat ~/.m2/settings.xml
+        shell: bash                      
 
       - name: Set up Maven
         run: mvn --errors --batch-mode --show-version org.apache.maven.plugins:maven-wrapper-plugin:3.1.0:wrapper "-Dmaven=${{ inputs.maven_version }}"
@@ -208,7 +218,12 @@ jobs:
         shell: bash
 
       - name: Clean Ensuring no file handle remains open on windows
-        run: ./mvnw clean --errors --batch-mode --show-version
+        run: ./mvnw clean --errors --batch-mode --show-version   
+        
+#      - name: clean local repo to ensure no locks remains on files
+#        if: always()
+#        run: rm -rf ~/.m2/
+#        shell: bash                
 
   verify:
     needs: fail-fast-build
@@ -262,11 +277,22 @@ jobs:
 
       - name: Set up JDK
         if: steps.should-run.conclusion == 'success'
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v2
         with:
           java-version: ${{ matrix.jdk }}
           distribution: ${{ matrix.distribution }}
           cache: 'maven'
+
+
+      - name: list local repo content before running the build
+        if: always()
+        run: ls -alrt ~/.m2/
+        shell: bash    
+
+      - name: cat settings
+        if: always()
+        run: cat ~/.m2/settings.xml
+        shell: bash                      
 
       - name: Set up Maven
         if: steps.should-run.conclusion == 'success'
@@ -288,6 +314,11 @@ jobs:
         run: df -h
         shell: bash
 
-      - name: Clean Ensuring no file handle remains open on windows
-        if: steps.should-run.conclusion == 'success'
-        run: ./mvnw clean --errors --batch-mode --show-version
+#      - name: Clean Ensuring no file handle remains open on windows
+#        if: steps.should-run.conclusion == 'success'
+#        run: ./mvnw clean --errors --batch-mode --show-version
+#  
+#      - name: clean local repo to ensure no locks remains on files
+#        if: always()
+#        run: rm -rf ~/.m2/
+#        shell: bash                        
