@@ -212,7 +212,7 @@ jobs:
         
       - name: clean local repo to ensure no locks remains on files
         if: always()
-        run: rm -rf ~/.m2/repository/
+        run: rm -rf ~/.m2/
         shell: bash                
 
   verify:
@@ -299,5 +299,5 @@ jobs:
   
       - name: clean local repo to ensure no locks remains on files
         if: always()
-        run: rm -rf ~/.m2/repository/
+        run: rm -rf ~/.m2/
         shell: bash                        
