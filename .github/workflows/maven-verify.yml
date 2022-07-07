@@ -178,11 +178,15 @@ jobs:
           distribution: ${{ inputs.ff-jdk-distribution }}
           cache: 'maven'
           
-
       - name: list local repo content before running the build
         if: always()
         run: ls -lrt ~/.m2/
-        shell: bash              
+        shell: bash     
+        
+      - name: cat settings
+        if: always()
+        run: cat ~/.m2/settings.xml
+        shell: bash                      
 
       - name: Set up Maven
         run: mvn --errors --batch-mode --show-version org.apache.maven.plugins:maven-wrapper-plugin:3.1.0:wrapper "-Dmaven=${{ inputs.maven_version }}"
@@ -284,6 +288,11 @@ jobs:
         if: always()
         run: ls -lrt ~/.m2/
         shell: bash    
+
+      - name: cat settings
+        if: always()
+        run: cat ~/.m2/settings.xml
+        shell: bash                      
 
       - name: Set up Maven
         if: steps.should-run.conclusion == 'success'
