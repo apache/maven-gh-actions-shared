@@ -209,6 +209,16 @@ jobs:
 
       - name: Clean Ensuring no file handle remains open on windows
         run: ./mvnw clean --errors --batch-mode --show-version
+        
+      - name: list local repo
+        if: always()
+        run: ls -lrt ~/.m2/repository/
+        shell: bash    
+        
+      - name: clean local repo
+        if: always()
+        run: rm ~/.m2/repository/
+        shell: bash                
 
   verify:
     needs: fail-fast-build
@@ -291,3 +301,13 @@ jobs:
       - name: Clean Ensuring no file handle remains open on windows
         if: steps.should-run.conclusion == 'success'
         run: ./mvnw clean --errors --batch-mode --show-version
+        
+      - name: list local repo
+        if: always()
+        run: ls -lrt ~/.m2/repository/
+        shell: bash    
+        
+      - name: clean local repo
+        if: always()
+        run: rm ~/.m2/repository/
+        shell: bash                        
