@@ -217,7 +217,7 @@ jobs:
         
       - name: clean local repo
         if: always()
-        run: rm ~/.m2/repository/
+        run: rm -rf ~/.m2/repository/
         shell: bash                
 
   verify:
@@ -309,5 +309,5 @@ jobs:
         
       - name: clean local repo
         if: always()
-        run: rm ~/.m2/repository/
+        run: rm -rf ~/.m2/repository/
         shell: bash                        
