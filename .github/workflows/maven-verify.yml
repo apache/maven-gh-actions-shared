@@ -180,7 +180,7 @@ jobs:
           
       - name: list local repo content before running the build
         if: always()
-        run: ls -lrt ~/.m2/
+        run: ls -alrt ~/.m2/
         shell: bash     
         
       - name: cat settings
@@ -286,7 +286,7 @@ jobs:
 
       - name: list local repo content before running the build
         if: always()
-        run: ls -lrt ~/.m2/
+        run: ls -alrt ~/.m2/
         shell: bash    
 
       - name: cat settings
