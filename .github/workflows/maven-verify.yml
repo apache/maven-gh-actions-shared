@@ -177,6 +177,12 @@ jobs:
           java-version: ${{ inputs.ff-jdk }}
           distribution: ${{ inputs.ff-jdk-distribution }}
           cache: 'maven'
+          
+
+      - name: list local repo content before running the build
+        if: always()
+        run: ls -lrt ~/.m2/
+        shell: bash              
 
       - name: Set up Maven
         run: mvn --errors --batch-mode --show-version org.apache.maven.plugins:maven-wrapper-plugin:3.1.0:wrapper "-Dmaven=${{ inputs.maven_version }}"
@@ -210,10 +216,10 @@ jobs:
       - name: Clean Ensuring no file handle remains open on windows
         run: ./mvnw clean --errors --batch-mode --show-version   
         
-      - name: clean local repo to ensure no locks remains on files
-        if: always()
-        run: rm -rf ~/.m2/
-        shell: bash                
+#      - name: clean local repo to ensure no locks remains on files
+#        if: always()
+#        run: rm -rf ~/.m2/
+#        shell: bash                
 
   verify:
     needs: fail-fast-build
@@ -273,6 +279,12 @@ jobs:
           distribution: ${{ matrix.distribution }}
           cache: 'maven'
 
+
+      - name: list local repo content before running the build
+        if: always()
+        run: ls -lrt ~/.m2/
+        shell: bash    
+
       - name: Set up Maven
         if: steps.should-run.conclusion == 'success'
         run: mvn --errors --batch-mode --show-version org.apache.maven.plugins:maven-wrapper-plugin:3.1.0:wrapper "-Dmaven=${{ inputs.maven_version }}"
@@ -293,11 +305,11 @@ jobs:
         run: df -h
         shell: bash
 
-      - name: Clean Ensuring no file handle remains open on windows
-        if: steps.should-run.conclusion == 'success'
-        run: ./mvnw clean --errors --batch-mode --show-version
-  
-      - name: clean local repo to ensure no locks remains on files
-        if: always()
-        run: rm -rf ~/.m2/
-        shell: bash                        
+#      - name: Clean Ensuring no file handle remains open on windows
+#        if: steps.should-run.conclusion == 'success'
+#        run: ./mvnw clean --errors --batch-mode --show-version
+#  
+#      - name: clean local repo to ensure no locks remains on files
+#        if: always()
+#        run: rm -rf ~/.m2/
+#        shell: bash                        
