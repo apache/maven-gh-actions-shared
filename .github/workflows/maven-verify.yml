@@ -178,7 +178,7 @@ jobs:
           distribution: ${{ inputs.ff-jdk-distribution }}
           cache: 'maven'
           
-      - name: list local repo content before running the build
+      - name: List local repo content before running the build
         if: always()
         run: ls -alrt ~/.m2/
         shell: bash     
