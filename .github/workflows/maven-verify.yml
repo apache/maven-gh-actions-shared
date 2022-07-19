@@ -206,7 +206,6 @@ jobs:
         shell: bash
         
       - name: Clean Ensuring no file handle remains open on windows
-        if: steps.should-run.conclusion == 'success'
         run: ./mvnw clean --errors --batch-mode --show-version           
 
   verify:
