@@ -182,20 +182,10 @@ jobs:
         run:
           mvn --errors --batch-mode --show-version org.apache.maven.plugins:maven-wrapper-plugin:3.1.0:wrapper "-Dmaven=${{ inputs.ff-maven }}"
 
-      - name: Build with Maven
-        run: ./mvnw --errors --batch-mode --show-version ${{ inputs.maven-args }} ${{ inputs.ff-goal }}
-        
-      - name: Clean Ensuring no file handle remains open on windows
-        run: ./mvnw clean --errors --batch-mode --show-version           
-
       - name: Build Maven Site
         run: ./mvnw --errors --batch-mode --show-version ${{ inputs.maven-args }} ${{ inputs.ff-site-goal }}
         if: inputs.ff-site-run
-        
-      - name: Clean Ensuring no file handle remains open on windows
-        if: steps.should-run.conclusion == 'success'
-        run: ./mvnw clean --errors --batch-mode --show-version            
-
+               
       - name: Upload Maven Site
         uses: actions/upload-artifact@v3
         with:
@@ -214,6 +204,10 @@ jobs:
         if: always()
         run: df -h
         shell: bash
+        
+      - name: Clean Ensuring no file handle remains open on windows
+        if: steps.should-run.conclusion == 'success'
+        run: ./mvnw clean --errors --batch-mode --show-version           
 
   verify:
     needs: fail-fast-build
@@ -293,3 +287,7 @@ jobs:
         if: steps.should-run.conclusion == 'success' && always()
         run: df -h
         shell: bash
+        
+      - name: Clean Ensuring no file handle remains open on windows
+        if: steps.should-run.conclusion == 'success'
+        run: ./mvnw clean --errors --batch-mode --show-version           
