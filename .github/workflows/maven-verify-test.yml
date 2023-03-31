@@ -28,6 +28,7 @@ jobs:
   verify-2:
     name: Verify 2
     uses: ./.github/workflows/maven-verify.yml
+    needs: verify-1
     with:
       ff-goal: test
       verify-goal: clean install
