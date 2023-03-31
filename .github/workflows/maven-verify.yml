@@ -35,7 +35,7 @@ on:
       jdk-matrix:
         description: jdk matrix as json array
         required: false
-        default: '[ "8", "17" ]'
+        default: '[ "20", "17", "8" ]'
         type: string
 
       jdk-distribution-matrix:
@@ -90,7 +90,7 @@ on:
       ff-jdk:
         description: The jdk version used during fail-fast-build job
         required: false
-        default: '17'
+        default: '20'
         type: string
 
       ff-jdk-distribution:
