@@ -1,5 +1,3 @@
-package org.apache.test;
-
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -9,7 +7,7 @@ package org.apache.test;
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
  * software distributed under the License is distributed on an
@@ -18,15 +16,14 @@ package org.apache.test;
  * specific language governing permissions and limitations
  * under the License.
  */
+package org.apache.test;
 
 /**
  * Test app
  */
-public class TestApp
-{
+public class TestApp {
 
-    public static void main( String[] args )
-    {
+    public static void main(String[] args) {
         m1();
         m2();
     }
@@ -34,18 +31,15 @@ public class TestApp
     /**
      * FIXME in javadoc
      */
-    private static void m1()
-    {
-        System.out.println( "Hello" );
+    private static void m1() {
+        System.out.println("Hello");
     }
 
-    private static void m2()
-    {
-        System.out.println( "Hello" );
+    private static void m2() {
+        System.out.println("Hello");
     }
 
-    private static void m3()
-    {
+    private static void m3() {
         // TODO test tag
     }
 }
