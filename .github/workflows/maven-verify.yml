@@ -189,7 +189,7 @@ jobs:
 
       - name: Set up Maven
         run:
-          mvn --errors --batch-mode --show-version org.apache.maven.plugins:maven-wrapper-plugin:3.2.0:wrapper "-Dmaven=${{ inputs.ff-maven }}"
+          mvn --errors --batch-mode --show-version org.apache.maven.plugins:maven-wrapper-plugin:3.2.0:wrapper "-Dtype=only-script" "-Dmaven=${{ inputs.ff-maven }}"
 
       - name: Build with Maven
         run: ./mvnw --errors --batch-mode --show-version ${{ inputs.maven-args }} ${{ inputs.ff-goal }}
@@ -283,7 +283,7 @@ jobs:
 
       - name: Set up Maven
         if: steps.should-run.conclusion == 'success'
-        run: mvn --errors --batch-mode --show-version org.apache.maven.plugins:maven-wrapper-plugin:3.2.0:wrapper "-Dmaven=${{ matrix.maven }}"
+        run: mvn --errors --batch-mode --show-version org.apache.maven.plugins:maven-wrapper-plugin:3.2.0:wrapper "-Dtype=only-script" "-Dmaven=${{ matrix.maven }}"
 
       - name: Build with Maven
         if: steps.should-run.conclusion == 'success'
