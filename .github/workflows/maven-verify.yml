@@ -50,6 +50,12 @@ on:
         default: '[ "3.9.4" ]'
         type: string
 
+      matrix-include:
+        description: include for matrix as json
+        required: false
+        default: '[]'
+        type: string
+
       matrix-exclude:
         description: exclude for matrix as json
         required: false
@@ -225,6 +231,7 @@ jobs:
         jdk: ${{ fromJSON( inputs.jdk-matrix ) }}
         distribution: ${{ fromJSON( inputs.jdk-distribution-matrix ) }}
         maven: ${{ fromJSON( inputs.maven-matrix ) }}
+        include: ${{ fromJSON( inputs.matrix-include ) }}
         exclude: ${{ fromJSON( inputs.matrix-exclude ) }}
       max-parallel: ${{ inputs.max-parallel }}
 
