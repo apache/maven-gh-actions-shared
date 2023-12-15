@@ -197,6 +197,7 @@ jobs:
 
       - name: Upload Maven Site
         uses: actions/upload-artifact@v3
+        if: inputs.ff-site-run
         with:
           name: ${{ github.run_number }}-site-${{ inputs.ff-os }}-${{ inputs.ff-jdk }}-${{ inputs.ff-jdk-distribution }}
           path: |

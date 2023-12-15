@@ -30,6 +30,7 @@ jobs:
     uses: ./.github/workflows/maven-verify.yml
     needs: verify-1
     with:
+      ff-site-run: false
       ff-goal: test
       verify-goal: clean install
       verify-fail-fast: false
