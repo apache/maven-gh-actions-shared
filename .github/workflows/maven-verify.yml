@@ -157,6 +157,9 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+# clare all permissions for GITHUB_TOKEN
+permissions: {}
+
 jobs:
 
   # verify build on one node - before matrix will start
