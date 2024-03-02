@@ -282,10 +282,8 @@ jobs:
       - name: Check GnuPG
         if: >
           inputs.install-gpg &&
-          steps.should-run.conclusion == 'success' &&
-          matrix.os == 'windows-latest'
+          steps.should-run.conclusion == 'success'
         run: gpg --version
-
 
       - name: Show free disk space
         if: steps.should-run.conclusion == 'success'
