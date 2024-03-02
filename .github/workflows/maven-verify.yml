@@ -152,6 +152,12 @@ on:
         default: false
         type: boolean
 
+      install-gpg:
+        description: Ensure all build images have GnuPG installed
+        required: false
+        default: false
+        type: boolean
+
 # allow single build per branch or PR
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -261,6 +267,21 @@ jobs:
           matrix.os == 'macOS-latest'
         run: |
           brew install mercurial
+
+      - name: Install GnuPG
+        if: >
+          inputs.install-gpg &&
+          steps.should-run.conclusion == 'success' &&
+          matrix.os == 'Windows'
+        run: |
+          $env:PATH = "C:\Windows\system32;C:\Windows;C:\Windows\System32\Wbem;C:\Windows\System32\WindowsPowerShell\v1.0\;C:\ProgramData\chocolatey\bin"
+          [Environment]::SetEnvironmentVariable("Path", $env:PATH, "Machine")
+          choco install --yes gpg4win
+          echo "C:\Program Files (x86)\Gpg4win\..\GnuPG\bin" >> $env:GITHUB_PATH
+
+      - name: Check GnuPG
+        run: gpg --version
+
 
       - name: Show free disk space
         if: steps.should-run.conclusion == 'success'
