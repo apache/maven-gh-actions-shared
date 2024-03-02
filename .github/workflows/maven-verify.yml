@@ -272,7 +272,7 @@ jobs:
         if: >
           inputs.install-gpg &&
           steps.should-run.conclusion == 'success' &&
-          matrix.os == 'Windows'
+          matrix.os == 'windows-latest'
         run: |
           $env:PATH = "C:\Windows\system32;C:\Windows;C:\Windows\System32\Wbem;C:\Windows\System32\WindowsPowerShell\v1.0\;C:\ProgramData\chocolatey\bin"
           [Environment]::SetEnvironmentVariable("Path", $env:PATH, "Machine")
@@ -280,6 +280,10 @@ jobs:
           echo "C:\Program Files (x86)\Gpg4win\..\GnuPG\bin" >> $env:GITHUB_PATH
 
       - name: Check GnuPG
+        if: >
+          inputs.install-gpg &&
+          steps.should-run.conclusion == 'success' &&
+          matrix.os == 'windows-latest'
         run: gpg --version
 
 
