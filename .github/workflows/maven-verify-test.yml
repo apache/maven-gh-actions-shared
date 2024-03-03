@@ -24,12 +24,12 @@ jobs:
   verify-1:
     name: Verify 1
     # for testing purpose you can change to your fork and branch
-    uses: apache/maven-gh-actions-shared/.github/workflows/maven-verify.yml@v1
+    uses: apache/maven-gh-actions-shared/.github/workflows/maven-verify.yml@v4
 
   verify-2:
     name: Verify 2
     # for testing purpose you can change to your fork and branch
-    uses: apache/maven-gh-actions-shared/.github/workflows/maven-verify.yml@v1
+    uses: apache/maven-gh-actions-shared/.github/workflows/maven-verify.yml@v4
     with:
       ff-goal: test
       verify-goal: clean install
