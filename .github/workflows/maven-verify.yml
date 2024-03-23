@@ -65,7 +65,7 @@ on:
       max-parallel:
         description: max parallel jobs
         required: false
-        default: 100
+        default: 20
         type: number
 
       timeout-minutes:
