@@ -54,7 +54,7 @@ on:
 jobs:
   build:
     name: Verify
-    uses: apache/maven-gh-actions-shared/.github/workflows/maven-verify.yml@v3
+    uses: apache/maven-gh-actions-shared/.github/workflows/maven-verify.yml@v4
 
 ```
 ## Events that can trigger workflows
