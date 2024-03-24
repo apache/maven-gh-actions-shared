@@ -85,7 +85,7 @@ We can store some logs of execution in case of failure as workflow attachments:
 
 ```yaml
 ...
-    uses: apache/maven-gh-actions-shared/.github/workflows/maven-verify.yml@v3
+    uses: apache/maven-gh-actions-shared/.github/workflows/maven-verify.yml@v4
     with:
       failure-upload-path: |
         **/target/surefire-reports/*
@@ -94,7 +94,7 @@ We can store some logs of execution in case of failure as workflow attachments:
 
 ```yaml
 ...
-    uses: apache/maven-gh-actions-shared/.github/workflows/maven-verify.yml@v3
+    uses: apache/maven-gh-actions-shared/.github/workflows/maven-verify.yml@v4
     with:
       matrix-exclude: >
         [ 
@@ -108,7 +108,7 @@ We can store some logs of execution in case of failure as workflow attachments:
 
 ```yaml
 ...
-    uses: apache/maven-gh-actions-shared/.github/workflows/maven-verify.yml@v3
+    uses: apache/maven-gh-actions-shared/.github/workflows/maven-verify.yml@v4
     with:
       ff-goal: 'install'
       verify-goal: 'install -P run-its'
@@ -118,7 +118,7 @@ We can store some logs of execution in case of failure as workflow attachments:
 
 ```yaml
 ...
-    uses: apache/maven-gh-actions-shared/.github/workflows/maven-verify.yml@v3
+    uses: apache/maven-gh-actions-shared/.github/workflows/maven-verify.yml@v4
     with:
       ff-maven: "3.8.6"                     # Maven version for fail-fast-build
       maven-matrix: '[ "3.2.5", "3.8.6" ]'  # Maven versions matrix for verify builds
@@ -128,7 +128,7 @@ We can store some logs of execution in case of failure as workflow attachments:
 
 More options with default values can be found in workflow source in `inputs` section:
 
-https://github.com/apache/maven-gh-actions-shared/blob/v3/.github/workflows/maven-verify.yml
+https://github.com/apache/maven-gh-actions-shared/blob/v4/.github/workflows/maven-verify.yml
 
 # Resources
 
