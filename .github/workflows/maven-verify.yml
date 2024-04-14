@@ -96,7 +96,7 @@ on:
       ff-jdk:
         description: The jdk version used during fail-fast-build job
         required: false
-        default: '17'
+        default: '22'
         type: string
 
       ff-jdk-distribution:
