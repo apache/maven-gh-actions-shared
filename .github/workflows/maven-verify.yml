@@ -29,7 +29,7 @@ on:
       os-matrix:
         description: os matrix as json array
         required: false
-        default: '[ "ubuntu-latest", "windows-latest", "macOS-latest" ]'
+        default: '[ "ubuntu-latest", "windows-latest", "macos-latest" ]'
         type: string
 
       jdk-matrix:
@@ -41,7 +41,7 @@ on:
       jdk-distribution-matrix:
         description: jdk distribution matrix
         required: false
-        default: '[ "temurin" ]'
+        default: '[ "zulu" ]'
         type: string
 
       maven-matrix:
@@ -102,7 +102,7 @@ on:
       ff-jdk-distribution:
         description: The jdk distribution used during fail-fast-build job
         required: false
-        default: 'temurin'
+        default: 'zulu'
         type: string
 
       ff-goal:
@@ -264,7 +264,7 @@ jobs:
         if: >
           inputs.install-mercurial &&
           steps.should-run.conclusion == 'success' &&
-          matrix.os == 'macOS-latest'
+          matrix.os == 'macos-latest'
         run: |
           brew install mercurial
 
