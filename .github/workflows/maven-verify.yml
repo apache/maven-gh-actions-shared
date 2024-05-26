@@ -47,7 +47,7 @@ on:
       maven-matrix:
         description: The Maven version matrix as json array
         required: false
-        default: '[ "3.6.3", "3.9.6" ]'
+        default: '[ "3.6.3", "3.9.7" ]'
         type: string
 
       matrix-include:
@@ -90,7 +90,7 @@ on:
       ff-maven:
         description: The Maven version used during fail-fast-build job
         required: false
-        default: '3.9.6'
+        default: '3.9.7'
         type: string
 
       ff-jdk:
@@ -195,7 +195,7 @@ jobs:
 
       - name: Set up Maven
         run:
-          mvn --errors --batch-mode --show-version org.apache.maven.plugins:maven-wrapper-plugin:3.3.1:wrapper "-Dmaven=${{ inputs.ff-maven }}"
+          mvn --errors --batch-mode --show-version org.apache.maven.plugins:maven-wrapper-plugin:3.3.2:wrapper "-Dmaven=${{ inputs.ff-maven }}"
 
       - name: Build with Maven
         run: ./mvnw --errors --batch-mode --show-version ${{ inputs.maven-args }} ${{ inputs.ff-goal }}
@@ -306,7 +306,7 @@ jobs:
 
       - name: Set up Maven
         if: steps.should-run.conclusion == 'success'
-        run: mvn --errors --batch-mode --show-version org.apache.maven.plugins:maven-wrapper-plugin:3.3.1:wrapper "-Dmaven=${{ matrix.maven }}"
+        run: mvn --errors --batch-mode --show-version org.apache.maven.plugins:maven-wrapper-plugin:3.3.2:wrapper "-Dmaven=${{ matrix.maven }}"
 
       - name: Build with Maven
         if: steps.should-run.conclusion == 'success'
