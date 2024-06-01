@@ -21,12 +21,14 @@ on: [ push, pull_request ]
 
 jobs:
 
+  # default config
   verify-1:
     name: Verify 1
     uses: ./.github/workflows/maven-verify.yml
 
+  # override fail fast config
   verify-2:
-    name: Verify 2
+    name: Verify 2 - fail fast config
     uses: ./.github/workflows/maven-verify.yml
     needs: verify-1
     with:
@@ -35,4 +37,25 @@ jobs:
       ff-jdk: '21'
       verify-goal: clean install
       verify-fail-fast: false
-      maven-matrix: '[ "3.9.6", "3.8.8", "3.6.3" ]'
+      maven-matrix: '[ "3.9.7", "3.8.8", "3.6.3" ]'
+
+  # test with Maven 4
+  verify-3:
+    name: Verify 3 - with Maven 4
+    uses: ./.github/workflows/maven-verify.yml
+    needs: verify-2
+    with:
+      maven4-enabled: true
+      ff-site-run: false
+      ff-goal: verify
+      verify-goal: verify
+
+  # test with Maven 4 without fail fast job
+  verify-4:
+    name: Verify 4 - with Maven 4 - no ff job
+    uses: ./.github/workflows/maven-verify.yml
+    needs: verify-3
+    with:
+      maven4-enabled: true
+      ff-run: false
+      verify-goal: verify
