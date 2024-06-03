@@ -124,6 +124,18 @@ We can store some logs of execution in case of failure as workflow attachments:
       maven-matrix: '[ "3.2.5", "3.8.6" ]'  # Maven versions matrix for verify builds
 ```
 
+## Testing with Maven 4
+
+```yaml
+...
+    uses: apache/maven-gh-actions-shared/.github/workflows/maven-verify.yml@v4
+    with:
+      maven4-enabled: true
+      maven4-version: 'xxx'    # only needed if you want to override default
+      verify-goal: 'verify'    # only needed if project doesn't have a run-its profile
+```
+
+
 ## More options
 
 More options with default values can be found in workflow source in `inputs` section:
