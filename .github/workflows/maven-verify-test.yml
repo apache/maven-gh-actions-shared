@@ -59,3 +59,12 @@ jobs:
       maven4-enabled: true
       ff-run: false
       verify-goal: verify
+
+  # test only fail fast job
+  verify-5:
+    name: Verify 5 - disable matrix build
+    uses: ./.github/workflows/maven-verify.yml
+    needs: verify-4
+    with:
+      ff-site-run: false
+      matrix-enabled: false

@@ -74,6 +74,12 @@ on:
         default: '[]'
         type: string
 
+      matrix-enabled:
+        description: Determinate if use matrix build
+        required: false
+        default: true
+        type: boolean
+
       max-parallel:
         description: max parallel jobs
         required: false
@@ -243,7 +249,7 @@ jobs:
   setup-matrix:
     runs-on: "ubuntu-latest"
     needs: fail-fast-build
-    if: always() && ( !inputs.ff-run || needs.fail-fast-build.result == 'success' )
+    if: always() && inputs.matrix-enabled && ( !inputs.ff-run || needs.fail-fast-build.result == 'success' )
     outputs:
       maven: ${{ steps.maven.outputs.matrix }}
       exclude: ${{ steps.exclude.outputs.matrix }}
