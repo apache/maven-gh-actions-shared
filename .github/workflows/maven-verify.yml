@@ -238,7 +238,7 @@ jobs:
           path: ${{ inputs.failure-upload-path }}
 
       - name: Show free disk space
-        if: always()
+        if: (!cancelled())
         run: df -h
         shell: bash
 
@@ -249,7 +249,7 @@ jobs:
   setup-matrix:
     runs-on: "ubuntu-latest"
     needs: fail-fast-build
-    if: always() && inputs.matrix-enabled && ( !inputs.ff-run || needs.fail-fast-build.result == 'success' )
+    if: (!cancelled()) && inputs.matrix-enabled && ( !inputs.ff-run || needs.fail-fast-build.result == 'success' )
     outputs:
       maven: ${{ steps.maven.outputs.matrix }}
       exclude: ${{ steps.exclude.outputs.matrix }}
@@ -291,7 +291,7 @@ jobs:
     name: ${{ matrix.os }} jdk-${{ matrix.jdk }}-${{ matrix.distribution }} ${{ matrix.maven }}
     timeout-minutes: ${{ inputs.timeout-minutes }}
     runs-on: ${{ matrix.os }}
-    if: always() && ( !inputs.ff-run || needs.setup-matrix.result == 'success' )
+    if: (!cancelled()) && ( !inputs.ff-run || needs.setup-matrix.result == 'success' )
 
     strategy:
       fail-fast: ${{ inputs.verify-fail-fast }}
@@ -379,7 +379,7 @@ jobs:
           path: ${{ inputs.failure-upload-path }}
 
       - name: Show free disk space
-        if: steps.should-run.conclusion == 'success' && always()
+        if: steps.should-run.conclusion == 'success' && !cancelled()
         run: df -h
         shell: bash
 
