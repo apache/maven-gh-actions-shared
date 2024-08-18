@@ -47,7 +47,7 @@ on:
       maven-matrix:
         description: The Maven version matrix as json array
         required: false
-        default: '[ "3.6.3", "3.9.8" ]'
+        default: '[ "3.6.3", "3.9.9" ]'
         type: string
 
       maven4-version:
@@ -108,7 +108,7 @@ on:
       ff-maven:
         description: The Maven version used during fail-fast-build job
         required: false
-        default: '3.9.8'
+        default: '3.9.9'
         type: string
 
       ff-jdk:
@@ -263,11 +263,11 @@ jobs:
             if [ "${{ inputs.maven4-enabled }}" = "true" ]; then
               echo '${{ inputs.maven-matrix }}' | jq -c '. + ["${{ inputs.maven4-version }}"]'
             else
-              echo '${{ inputs.maven-matrix }}'            
+              echo '${{ inputs.maven-matrix }}'
             fi
             echo 'EOF'
           } >> "$GITHUB_OUTPUT"
-          
+
           cat "$GITHUB_OUTPUT"
 
       - id: exclude
@@ -278,13 +278,13 @@ jobs:
             if [ "${{ inputs.maven4-enabled }}" = "true" ]; then
               echo '${{ inputs.matrix-exclude }}' | jq -c '. + [{"jdk": "8", "maven": "${{ inputs.maven4-version }}"}]'
             else
-              echo '${{ inputs.matrix-exclude }}'            
+              echo '${{ inputs.matrix-exclude }}'
             fi
             echo 'EOF'
           } >> "$GITHUB_OUTPUT"
-          
+
           cat "$GITHUB_OUTPUT"
-          
+
 
   verify:
     needs: setup-matrix
