@@ -243,7 +243,7 @@ jobs:
         shell: bash
 
       - name: Clean Ensuring no file handle remains open on windows
-        run: ./mvnw clean --errors --batch-mode --show-version
+        run: ./mvnw clean --errors --batch-mode --show-version "-Dmaven.clean.retryOnError"
 
   # prepare matrix data for verify step
   setup-matrix:
@@ -385,4 +385,4 @@ jobs:
 
       - name: Clean Ensuring no file handle remains open on windows
         if: steps.should-run.conclusion == 'success'
-        run: ./mvnw clean --errors --batch-mode --show-version
+        run: ./mvnw clean --errors --batch-mode --show-version "-Dmaven.clean.retryOnError"
