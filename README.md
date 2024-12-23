@@ -144,6 +144,55 @@ We can store some logs of execution in case of failure as workflow attachments:
       matrix-enabled: false
 ```
 
+## Pull Request Automation
+
+Create GitHub workflow in project file:
+
+```
+.github/workflows/pr-automation.yml
+```
+
+with content:
+
+```yaml
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+
+name: PR Automation
+on:
+  pull_request:
+    types:
+      - closed
+      - unlabeled
+      - demilestoned
+  pull_request_review:
+    types:
+      - submitted
+
+jobs:
+  pr-automation:
+    name: PR Automation
+    uses: apache/maven-gh-actions-shared/.github/workflows/pr-automation.yml@v4
+```
+
+After approval or merged:
+- default label - `maintenance` will be added
+- current milestone will be set
+ 
 ## More options
 
 More options with default values can be found in workflow source in `inputs` section:
