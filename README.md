@@ -187,6 +187,7 @@ jobs:
   pr-automation:
     name: PR Automation
     uses: apache/maven-gh-actions-shared/.github/workflows/pr-automation.yml@v4
+
 ```
 
 After approval or merged:
