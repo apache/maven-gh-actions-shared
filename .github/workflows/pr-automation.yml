@@ -60,6 +60,11 @@ jobs:
       approved: ${{ steps.review-decision.outputs.result }}
 
     steps:
+      - name: Dump GitHub context
+        env:
+          GITHUB_CONTEXT: ${{ toJson(github) }}
+        run: echo "$GITHUB_CONTEXT"
+
       - name: Get Review decision
         id: review-decision
         uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7
