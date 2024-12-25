@@ -99,7 +99,7 @@ jobs:
       pull-requests: write
 
     needs: review-decision
-    if: ( needs.review-decision.outputs.approved || github.event.action == 'demilestoned' ) && !github.event.pull_request.milestone
+    if: ( needs.review-decision.outputs.approved == 'true' || github.event.action == 'demilestoned' ) && !github.event.pull_request.milestone
     runs-on: ubuntu-latest
     steps:
       - name: Update milestone
@@ -140,7 +140,7 @@ jobs:
       pull-requests: write
 
     needs: review-decision
-    if: ( needs.review-decision.outputs.approved || github.event.action == 'unlabeled' ) && toJSON(github.event.pull_request.labels) == '[]'
+    if: ( needs.review-decision.outputs.approved == 'true' || github.event.action == 'unlabeled' ) && toJSON(github.event.pull_request.labels) == '[]'
     runs-on: ubuntu-latest
     steps:
 
