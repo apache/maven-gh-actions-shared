@@ -343,7 +343,7 @@ jobs:
           steps.should-run.conclusion == 'success' &&
           runner.os == 'Linux'
         run: |
-          apt install subversion
+          sudo apt install subversion
 
       - name: Install GnuPG
         if: >
