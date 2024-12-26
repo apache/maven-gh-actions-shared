@@ -174,14 +174,11 @@ with content:
 
 name: PR Automation
 on:
-  pull_request:
+  pull_request_target:
     types:
       - closed
       - unlabeled
       - demilestoned
-  pull_request_review:
-    types:
-      - submitted
 
 jobs:
   pr-automation:
@@ -189,6 +186,9 @@ jobs:
     uses: apache/maven-gh-actions-shared/.github/workflows/pr-automation.yml@v4
 
 ```
+
+We need a use `pull_request_target` event because we need `GITHUB_TOKEN` with write permission
+to update labels, milestones of PR from forked repositories.
 
 After approval or merged:
 - default label - `maintenance` will be added
