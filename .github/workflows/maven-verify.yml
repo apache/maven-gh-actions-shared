@@ -337,7 +337,7 @@ jobs:
         if: >
           inputs.install-subversion &&
           steps.should-run.conclusion == 'success' &&
-          matrix.os == 'ubuntu-latest'
+          runner.os == 'Linux'
         run: |
           apt install subversion
 
