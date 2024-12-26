@@ -201,6 +201,10 @@ jobs:
     if: inputs.ff-run && ( github.event_name == 'push' || ( github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork ) )
 
     steps:
+      - name: Install Subversion (svn) on Ubuntu
+        if: inputs.install-subversion && runner.os == 'Linux'
+        run: apt install subversion
+
       - name: Show free disk space
         run: df -h
         shell: bash
