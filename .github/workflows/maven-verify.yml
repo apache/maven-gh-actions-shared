@@ -170,6 +170,12 @@ on:
         default: false
         type: boolean
 
+      install-subversion:
+        description: Ensure all build images have Subversion(svn) installed
+        required: false
+        default: false
+        type: boolean
+
       install-gpg:
         description: Ensure all build images have GnuPG installed
         required: false
@@ -326,6 +332,14 @@ jobs:
           matrix.os == 'macos-latest'
         run: |
           brew install mercurial
+
+      - name: Install Subversion (svn) on Ubuntu
+        if: >
+          inputs.install-subversion &&
+          steps.should-run.conclusion == 'success' &&
+          matrix.os == 'ubuntu-latest'
+        run: |
+          apt install subversion
 
       - name: Install GnuPG
         if: >
