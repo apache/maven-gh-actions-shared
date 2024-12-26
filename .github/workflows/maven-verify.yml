@@ -203,7 +203,7 @@ jobs:
     steps:
       - name: Install Subversion (svn) on Ubuntu
         if: inputs.install-subversion && runner.os == 'Linux'
-        run: apt install subversion
+        run: sudo apt install subversion
 
       - name: Show free disk space
         run: df -h
