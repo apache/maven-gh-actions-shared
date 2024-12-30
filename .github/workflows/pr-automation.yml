@@ -25,22 +25,6 @@ on:
         default: 'maintenance'
         type: string
 
-# To use we need:
-#
-# on:
-#  pull_request_target:
-#    types:
-#      - closed
-#      - unlabeled
-#      - demilestoned
-#
-#jobs:
-#  pr-automation:
-#    name: PR Automation
-#    uses: apache/maven-gh-actions-shared/.github/workflows/pr-automation.yml@v4
-
-
-
 # allow single build per branch or PR
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
