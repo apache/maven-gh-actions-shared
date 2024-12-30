@@ -178,7 +178,7 @@ on:
     types:
       - closed
       - unlabeled
-      - demilestoned
+      - review_requested
 
 jobs:
   pr-automation:
