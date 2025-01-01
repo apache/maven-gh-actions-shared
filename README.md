@@ -200,6 +200,15 @@ More options with default values can be found in workflow source in `inputs` sec
 
 https://github.com/apache/maven-gh-actions-shared/blob/v4/.github/workflows/maven-verify.yml
 
+# Labels synchronization
+
+We can synchronize labels for all Maven repositories by action: [Labels sync](https://github.com/apache/maven-gh-actions-shared/actions/workflows/labels-sync.yml)
+
+Labels list are in file: [./githu/labels.js](https://github.com/apache/maven-gh-actions-shared/blob/main/.github/labels.js)
+
+Action require GitHub token which will be used for performing updates.
+Please create new [Personal access tokens (classic)](https://github.com/settings/tokens) with `repo` scope.
+
 # Resources
 
 - [Workflow syntax](https://docs.github.com/en/actions/learn-github-actions/workflow-syntax-for-github-actions)

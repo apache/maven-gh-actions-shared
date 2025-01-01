@@ -1,0 +1,99 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+
+name: Labels sync
+
+on:
+  workflow_dispatch:
+    inputs:
+      token:
+        type: string
+        description: 'A GitHub token used to perform action - access token (classic) with repo scope'
+        required: true
+
+jobs:
+  label-sync:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      max-parallel: 20
+      matrix:
+        repo:
+          - maven-changes-plugin
+          - maven-gh-actions-shared
+
+    steps:
+      - name: Mask GitHub token
+        run: echo "::add-mask::$(jq -r '.inputs.token' $GITHUB_EVENT_PATH)"
+
+      - name: Checkout
+        uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3
+        with:
+          persist-credentials: false
+
+      - name: Labels synchronizetion in ${{ matrix.repo }}
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7
+        env:
+          OWNER: 'apache'
+          REPO: ${{ matrix.repo }}
+        with:
+          github-token: ${{ inputs.token }}
+          script: |
+            const labels = require('./.github/labels.js');
+
+            console.log('Labels to update:');
+            console.log(labels);
+            
+            const currentLabels = await github.rest.issues.listLabelsForRepo({
+                owner: process.env.OWNER,
+                repo: process.env.REPO
+              });
+            
+            console.log('Current project labels:');
+            console.log(currentLabels.data);
+          
+            for (const label of labels) {
+              const currentLabel = currentLabels.data.find(({name}) => name == label.name);
+
+              console.log('Label:');
+              console.log(label);
+
+              console.log('currentLabel:');
+              console.log(currentLabel);
+            
+              if (!currentLabel) {
+  
+                console.log('Add label: ' + label.name);
+                github.rest.issues.createLabel({
+                  owner: process.env.OWNER,
+                  repo: process.env.REPO,
+                  ...label
+                });
+  
+              } else if (label.color != currentLabel.color || label.description != currentLabel.description) {
+                
+                console.log('Update label: ' + label.name);
+                github.rest.issues.updateLabel({
+                  owner: process.env.OWNER,
+                  repo: process.env.REPO,
+                  ...label
+                });
+            
+              } else {
+                console.log('Label: ' + label.name + ' is up to date');
+              }
+            }
