@@ -36,11 +36,12 @@ categories:
       - major-bug
   - title: ⚠️ Deprecated
     label: deprecated
-  - title: 🚀 New features and improvements
+  - title: ⭐ New features
+    labels:
+      - feature
+  - title: 🚀 New improvements
     labels:
       - enhancement
-      - feature
-      - rfe
   - title: 🐛 Bug Fixes
     labels:
       - bug

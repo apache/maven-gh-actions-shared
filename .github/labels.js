@@ -44,7 +44,12 @@ module.exports = [
     {
         name: "enhancement",
         color: "a2eeef",
-        description: "New feature or request"
+        description: "Improvement in existing feature"
+    },
+    {
+        name: "feature",
+        color: "a2eeef",
+        description: "New feature"
     },
     {
         name: "good first issue",
@@ -64,7 +69,7 @@ module.exports = [
     {
         name: "maintenance",
         color: "912E29",
-        description: ""
+        description: "Cleanups, code refactor without changing behavior"
     },
     {
         name: "wontfix",
