@@ -95,22 +95,29 @@ jobs:
             });
             
             console.log(milestones);
+            const branch = context.payload.pull_request.base.ref
             
-            if ( milestones.data.length == 0 ) {
+            if (milestones.data.length == 0) {
               throw new Error('There are no open milestones ... please create one')
             }
 
-            if ( milestones.data.length > 1 ) {
-              throw new Error('There are more then oen open milestones ... please choose manually')
+            var milestone;
+            if (milestones.data.length > 1) {
+              milestone = milestones.data.find(({description}) => description.includes('branch: ' + branch));
+              if (!milestone) {
+                throw new Error('There are more then oen open milestones ... please add a "branch: ' + branch + '" to description in one milestone');
+              }
+            } else {
+              milestone = milestones.data[0];
             }
             
-            console.log('Set milestone to: ' + milestones.data[0].title);
+            console.log('Set milestone to: ' + milestone.title);
             
             const result = await github.rest.issues.update({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: context.issue.number,
-              milestone: milestones.data[0].number
+              milestone: milestone.number
             });
             
             console.log(result);
