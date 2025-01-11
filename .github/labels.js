@@ -67,6 +67,31 @@ module.exports = [
         description: ""
     },
     {
+        name: "priority:blocker",
+        color: "cc0000",
+        description: "Blocks development and/or testing work, production could not run"
+    },
+    {
+        name: "priority:critical",
+        color: "ff0000",
+        description: "Crashes, loss of data, severe memory leak"
+    },
+    {
+        name: "priority:major",
+        color: "009900",
+        description: "Major loss of function"
+    },
+    {
+        name: "priority:minor",
+        color: "006600",
+        description: "Minor loss of function, or other problem where easy workaround is present"
+    },
+    {
+        name: "priority:trivial",
+        color: "003300",
+        description: "Cosmetic problem like misspelled words or misaligned text"
+    },
+    {
         name: "wontfix",
         color: "ffffff",
         description: "This will not be worked on"
