@@ -143,8 +143,14 @@ We can store some logs of execution in case of failure as workflow attachments:
     with:
       matrix-enabled: false
 ```
+ 
+## More options
 
-## Pull Request Automation
+More options with default values can be found in workflow source in `inputs` section:
+
+https://github.com/apache/maven-gh-actions-shared/blob/v4/.github/workflows/maven-verify.yml
+
+# Pull Request Automation
 
 Create GitHub workflow in project file:
 
@@ -193,12 +199,17 @@ to update labels, milestones of PR from forked repositories.
 After approval or merged:
 - default label - `maintenance` will be added
 - current milestone will be set
- 
-## More options
 
-More options with default values can be found in workflow source in `inputs` section:
+## milestone configuration
 
-https://github.com/apache/maven-gh-actions-shared/blob/v4/.github/workflows/maven-verify.yml
+We need exactly **one** open milestone in order to detect which is current.
+
+If we need more than one open milestone, we have to add a branch to the milestone description
+```
+branch: <branch name>
+```
+
+This identifies the default for that branch.
 
 # Labels synchronization
 
