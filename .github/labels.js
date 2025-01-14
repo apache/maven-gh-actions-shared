@@ -92,6 +92,11 @@ module.exports = [
         description: "Cosmetic problem like misspelled words or misaligned text"
     },
     {
+        name: "waiting-for-feedback",
+        color: "ffffff",
+        description: "Waiting for 4 weeks until issues or pull request will be closed"
+    },
+    {
         name: "wontfix",
         color: "ffffff",
         description: "This will not be worked on"
