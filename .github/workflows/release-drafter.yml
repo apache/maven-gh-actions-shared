@@ -29,8 +29,46 @@ on:
         type: string
         default: 'release-drafter.yml'
 
+concurrency: release-drafter
+
 jobs:
+  detect-version:
+    name: Detect version
+    runs-on: ubuntu-latest
+    permissions: {}
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+        with:
+          persist-credentials: 'false'
+
+      - id: has-pom
+        run: |
+          if [ -f pom.xml ]; then
+            echo "status=true" >> $GITHUB_OUTPUT
+          fi
+          cat $GITHUB_OUTPUT
+
+      - uses: actions/setup-java@7a6d8a8234af8eb26422e24e3006232cccaa061b # v4
+        if: steps.has-pom.outputs.status == 'true'
+        with:
+          java-version: '21'
+          distribution: 'zulu'
+          cache: 'maven'
+
+      - id: version
+        if: steps.has-pom.outputs.status == 'true'
+        run: |
+          mvn --batch-mode --non-recursive help:evaluate -Dexpression=project.version -Doutput=target/version.txt
+          V=$(cat target/version.txt)
+          echo "version=${V%-SNAPSHOT}" >> $GITHUB_OUTPUT
+          cat $GITHUB_OUTPUT
+
   update_release_draft:
+    name: Update Release Draft
+    needs: detect-version
     permissions:
       # write permission is required to create a github release
       contents: write
@@ -39,5 +77,6 @@ jobs:
       - uses: release-drafter/release-drafter@b1476f6e6eb133afa41ed8589daba6dc69b4d3f5  # v6
         with:
           config-name: ${{ inputs.config-name }}
+          version: ${{ needs.detect-version.outputs.version }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
