@@ -20,6 +20,9 @@ name-template: $NEXT_PATCH_VERSION
 tag-template: $NEXT_PATCH_VERSION
 version-template: $MAJOR.$MINOR.$PATCH
 
+commitish: master
+filter-by-commitish: true
+
 # Emoji reference: https://gitmoji.carloscuesta.me/
 categories:
   - title: ":boom: Breaking changes"
