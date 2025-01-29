@@ -16,9 +16,9 @@
 # under the License.
 
 # Configuration for Release Drafter: https://github.com/toolmantim/release-drafter
-name-template: $NEXT_PATCH_VERSION
-tag-template: $NEXT_PATCH_VERSION
-version-template: $MAJOR.$MINOR.$PATCH
+name-template: $RESOLVED_VERSION
+tag-template: v$RESOLVED_VERSION
+version-template: $COMPLETE
 
 commitish: master
 filter-by-commitish: true
