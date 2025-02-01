@@ -150,6 +150,149 @@ More options with default values can be found in workflow source in `inputs` sec
 
 https://github.com/apache/maven-gh-actions-shared/blob/v4/.github/workflows/maven-verify.yml
 
+# Release drafter configuration
+
+## Only default branch
+
+We need to add an action:
+
+```
+.github/workflows/release-drafter.yml
+```
+
+with content:
+
+```yml
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+   
+name: Release Drafter
+on:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+
+jobs:
+  update_release_draft:
+    uses: apache/maven-gh-actions-shared/.github/workflows/release-drafter.yml@v4
+```
+
+and configuration:
+
+```
+.github/release-drafter.yml
+```
+
+with content:
+
+```yml
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+
+_extends: maven-gh-actions-shared
+
+tag-template: <project-tag-prefix>-$RESOLVED_VERSION
+```
+
+## Multiple versions from multiple branches
+
+We need change a branch name in `.github/workflows/release-drafter.yml` in each branch:
+
+```yml
+name: Release Drafter
+on:
+  push:
+    branches:
+      - branch-name # <---
+  workflow_dispatch:
+```
+
+## First release from new branch
+
+When we create new branch for old version, release drafter will, can not find the previous release.
+
+We need a change a `target_commitish` for the latest release.
+
+Example for `maven-clean-plugin`
+
+Release `3.4.0` was done form master branch, next we create new branch for 3.x - `maven-clean-plugin-3.x`
+
+Release `3.4.0` has old `target_commitish`
+
+```
+gh api /repos/apache/maven-clean-plugin/releases/tags/maven-clean-plugin-3.4.0
+
+...
+"id": 161340667, <-- needed for update
+"tag_name": "maven-clean-plugin-3.4.0",
+"target_commitish": "master", <-- shold be new branch
+...
+```
+
+We need update it, by:
+
+```
+gh api --method PATCH /repos/apache/maven-clean-plugin/releases/161340667 -f "target_commitish=refs/heads/maven-clean-plugin-3.x"
+```
+
+## pre-release, beta versions
+
+To have a `pre-release`, beta versions we need add to `.github/release-drafter.yml`
+
+```yml
+include-pre-releases: true
+prerelease: true
+```
+
+## Specific configuration per branch
+
+When we need to have different configuration for each branch we need create a new `release-drafter` configuration in **default branch** ❗❗❗️
+
+When configuration name is different then default, we need specified configuration name from shared repository:
+
+```yml
+_extends: maven-gh-actions-shared:.github/release-drafter.yml
+...
+```
+
+Next in each branch we need provide new configuration name in action:
+
+```
+  update_release_draft:
+    uses: apache/maven-gh-actions-shared/.github/workflows/release-drafter.yml@v4
+    with:
+      config-name: '<config-name-per-branch>' 
+```
+
 # Pull Request Automation
 
 Create GitHub workflow in project file:
