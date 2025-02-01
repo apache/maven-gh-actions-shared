@@ -78,5 +78,6 @@ jobs:
         with:
           config-name: ${{ inputs.config-name }}
           version: ${{ needs.detect-version.outputs.version }}
+          commitish: ${{ github.ref }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
