@@ -20,7 +20,6 @@ name-template: $RESOLVED_VERSION
 tag-template: v$RESOLVED_VERSION
 version-template: $COMPLETE
 
-commitish: master
 filter-by-commitish: true
 
 # Emoji reference: https://gitmoji.carloscuesta.me/
