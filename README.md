@@ -135,6 +135,15 @@ We can store some logs of execution in case of failure as workflow attachments:
       verify-goal: 'verify'    # only needed if project doesn't have a run-its profile
 ```
 
+## Build with Maven 4 only
+
+```yaml
+...
+    uses: apache/maven-gh-actions-shared/.github/workflows/maven-verify.yml@v4
+    with:
+      maven4-build: true
+```
+
 ## Disable matrix build - only fail-fast build 
 
 ```yaml
