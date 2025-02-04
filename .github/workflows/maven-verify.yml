@@ -62,6 +62,12 @@ on:
         default: false
         type: boolean
 
+      maven4-build:
+        description: Determinate if use only Maven 4 in all builds
+        required: false
+        default: false
+        type: boolean
+
       matrix-include:
         description: include for matrix as json
         required: false
@@ -192,11 +198,62 @@ permissions: {}
 
 jobs:
 
+  setup-maven-version:
+    runs-on: "ubuntu-latest"
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      maven-matrix: ${{ steps.maven.outputs.matrix }}
+      exclude-matrix: ${{ steps.exclude.outputs.matrix }}
+
+    steps:
+      - id: version
+        name: setup Maven version for ff
+        run: |
+          if [ "${{ inputs.maven4-build }}" = "true" ]; then
+            echo "version=${{ inputs.maven4-version }}" >> $GITHUB_OUTPUT
+          else
+            echo "version=${{ inputs.ff-maven }}" >> $GITHUB_OUTPUT 
+          fi
+          cat $GITHUB_OUTPUT
+
+      - id: maven
+        name: setup Maven matrix
+        run: |
+          {
+            echo 'matrix<<EOF'
+            if [ "${{ inputs.maven4-build }}" =  "true" ]; then
+              echo "[\"${{ inputs.maven4-version }}\"]"
+            elif [ "${{ inputs.maven4-enabled }}" = "true" ]; then
+              echo '${{ inputs.maven-matrix }}' | jq -c '. + ["${{ inputs.maven4-version }}"]'
+            else
+              echo '${{ inputs.maven-matrix }}'
+            fi
+            echo 'EOF'
+          } >> "$GITHUB_OUTPUT"
+
+          cat "$GITHUB_OUTPUT"
+
+      - id: exclude
+        name: setup exclude matrix
+        run: |
+          {
+            echo 'matrix<<EOF'
+            if [ "${{ inputs.maven4-enabled }}" = "true" -o "${{ inputs.maven4-build }}" = "true" ]; then
+              echo '${{ inputs.matrix-exclude }}' | jq -c '. + [{"jdk": "8", "maven": "${{ inputs.maven4-version }}"}]'
+            else
+              echo '${{ inputs.matrix-exclude }}'
+            fi
+            echo 'EOF'
+          } >> "$GITHUB_OUTPUT"
+
+          cat "$GITHUB_OUTPUT"
+
   # verify build on one node - before matrix will start
   fail-fast-build:
-    name: ${{ inputs.ff-os }} jdk-${{ inputs.ff-jdk }}-${{ inputs.ff-jdk-distribution }} ${{ inputs.ff-maven }}
+    name: ${{ inputs.ff-os }} jdk-${{ inputs.ff-jdk }}-${{ inputs.ff-jdk-distribution }} ${{ needs.setup-maven-version.outputs.version }}
     runs-on: ${{ inputs.ff-os }}
     timeout-minutes: ${{ inputs.ff-timeout-minutes }}
+    needs: setup-maven-version
     # execute on any push or pull request from forked repo
     if: inputs.ff-run && ( github.event_name == 'push' || ( github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork ) )
 
@@ -227,7 +284,7 @@ jobs:
 
       - name: Set up Maven
         run:
-          mvn --errors --batch-mode --show-version org.apache.maven.plugins:maven-wrapper-plugin:3.3.2:wrapper "-Dmaven=${{ inputs.ff-maven }}"
+          mvn --errors --batch-mode --show-version org.apache.maven.plugins:maven-wrapper-plugin:3.3.2:wrapper "-Dmaven=${{ needs.setup-maven-version.outputs.version }}"
 
       - name: Build with Maven
         run: ./mvnw --errors --batch-mode --show-version ${{ inputs.maven-args }} ${{ inputs.ff-goal }}
@@ -259,53 +316,12 @@ jobs:
       - name: Clean Ensuring no file handle remains open on windows
         run: ./mvnw clean --errors --batch-mode --show-version "-Dmaven.clean.retryOnError"
 
-  # prepare matrix data for verify step
-  setup-matrix:
-    runs-on: "ubuntu-latest"
-    needs: fail-fast-build
-    if: (!cancelled()) && inputs.matrix-enabled && ( !inputs.ff-run || needs.fail-fast-build.result == 'success' )
-    outputs:
-      maven: ${{ steps.maven.outputs.matrix }}
-      exclude: ${{ steps.exclude.outputs.matrix }}
-
-    steps:
-      - id: maven
-        name: setup Maven matrix
-        run: |
-          {
-            echo 'matrix<<EOF'
-            if [ "${{ inputs.maven4-enabled }}" = "true" ]; then
-              echo '${{ inputs.maven-matrix }}' | jq -c '. + ["${{ inputs.maven4-version }}"]'
-            else
-              echo '${{ inputs.maven-matrix }}'
-            fi
-            echo 'EOF'
-          } >> "$GITHUB_OUTPUT"
-
-          cat "$GITHUB_OUTPUT"
-
-      - id: exclude
-        name: setup exclude matrix
-        run: |
-          {
-            echo 'matrix<<EOF'
-            if [ "${{ inputs.maven4-enabled }}" = "true" ]; then
-              echo '${{ inputs.matrix-exclude }}' | jq -c '. + [{"jdk": "8", "maven": "${{ inputs.maven4-version }}"}]'
-            else
-              echo '${{ inputs.matrix-exclude }}'
-            fi
-            echo 'EOF'
-          } >> "$GITHUB_OUTPUT"
-
-          cat "$GITHUB_OUTPUT"
-
-
   verify:
-    needs: setup-matrix
+    if: (!cancelled()) && inputs.matrix-enabled && ( !inputs.ff-run || needs.fail-fast-build.result == 'success' )
+    needs: [setup-maven-version, fail-fast-build]
     name: ${{ matrix.os }} jdk-${{ matrix.jdk }}-${{ matrix.distribution }} ${{ matrix.maven }}
     timeout-minutes: ${{ inputs.timeout-minutes }}
     runs-on: ${{ matrix.os }}
-    if: (!cancelled()) && ( !inputs.ff-run || needs.setup-matrix.result == 'success' )
 
     strategy:
       fail-fast: ${{ inputs.verify-fail-fast }}
@@ -313,9 +329,9 @@ jobs:
         os: ${{ fromJSON( inputs.os-matrix ) }}
         jdk: ${{ fromJSON( inputs.jdk-matrix ) }}
         distribution: ${{ fromJSON( inputs.jdk-distribution-matrix ) }}
-        maven: ${{ fromJSON( needs.setup-matrix.outputs.maven ) }}
+        maven: ${{ fromJSON( needs.setup-maven-version.outputs.maven-matrix ) }}
         include: ${{ fromJSON( inputs.matrix-include ) }}
-        exclude: ${{ fromJSON( needs.setup-matrix.outputs.exclude ) }}
+        exclude: ${{ fromJSON( needs.setup-maven-version.outputs.exclude-matrix ) }}
       max-parallel: ${{ inputs.max-parallel }}
 
     steps:
@@ -325,7 +341,8 @@ jobs:
           matrix.os != inputs.ff-os ||
           matrix.jdk != inputs.ff-jdk ||
           matrix.distribution != inputs.ff-jdk-distribution ||
-          matrix.maven != inputs.ff-maven ||
+          (!inputs.maven4-build && matrix.maven != inputs.ff-maven) ||
+          (inputs.maven4-build && matrix.maven != inputs.maven4-version) ||
           inputs.verify-goal != inputs.ff-goal
         run: echo ok
 
