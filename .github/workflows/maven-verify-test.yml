@@ -47,8 +47,6 @@ jobs:
     with:
       maven4-enabled: true
       ff-site-run: false
-      ff-goal: verify
-      verify-goal: verify
 
   # test with Maven 4 without fail fast job
   verify-4:
@@ -58,7 +56,6 @@ jobs:
     with:
       maven4-enabled: true
       ff-run: false
-      verify-goal: verify
 
   # test only fail fast job
   verify-5:
@@ -68,3 +65,12 @@ jobs:
     with:
       ff-site-run: false
       matrix-enabled: false
+
+  # test only Maven 4
+  verify-6:
+    name: Verify 6 - Maven4 build
+    uses: ./.github/workflows/maven-verify.yml
+    needs: verify-5
+    with:
+      maven4-build: true
+      ff-site-run: false

@@ -49,4 +49,10 @@
       </plugin>
     </plugins>
   </build>
+
+  <profiles>
+    <profile>
+      <id>run-its</id>
+    </profile>
+  </profiles>
 </project>
