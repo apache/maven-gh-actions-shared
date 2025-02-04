@@ -103,7 +103,7 @@ jobs:
 
             var milestone;
             if (milestones.data.length > 1) {
-              milestone = milestones.data.find(({description}) => description.includes('branch: ' + branch));
+              milestone = milestones.data.find(({description}) => description?.includes('branch: ' + branch));
               if (!milestone) {
                 throw new Error('There are more then oen open milestones ... please add a "branch: ' + branch + '" to description in one milestone');
               }
