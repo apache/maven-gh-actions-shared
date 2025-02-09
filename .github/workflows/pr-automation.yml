@@ -27,8 +27,8 @@ on:
 
 # allow single build per branch or PR
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.event.number }}
+  cancel-in-progress: false
 
 # clare all permissions for GITHUB_TOKEN
 permissions: {}
