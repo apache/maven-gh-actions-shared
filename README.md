@@ -370,6 +370,57 @@ Labels list are in file: [./.github/labels.js](https://github.com/apache/maven-g
 Action require GitHub token which will be used for performing updates.
 Please create new [Personal access tokens (classic)](https://github.com/settings/tokens) with `repo` scope.
 
+# Management of stale issues and PRs
+
+We need an action in project:
+
+```yml
+.github/workflows/stale.yml
+```
+
+with body:
+
+```yml
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+
+name: Stale
+
+on:
+  schedule:
+    - cron: '15 3 * * *'
+  issue_comment:
+    types: [ 'created' ]
+
+jobs:
+  stale:
+    uses: 'apache/maven-gh-actions-shared/.github/workflows/stale.yml@v4'
+
+```
+
+The cron time definition can be randomly changed to avoid executing at the same time in all project.
+
+## Issues and PRs with waiting-for-feedback label
+
+- will be marked as stale after 60 days
+- will be closed after next 30 days
+- items with milestone or labels `priority:blocker`, `priority:critical` will not be checked
+- `waiting-for-feedback` label will be removed after comments
+
 # Resources
 
 - [Workflow syntax](https://docs.github.com/en/actions/learn-github-actions/workflow-syntax-for-github-actions)
