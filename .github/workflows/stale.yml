@@ -1,0 +1,70 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+
+# https://github.com/actions/stale
+
+name: Stale
+
+on:
+  workflow_call:
+
+permissions:
+  issues: write
+  pull-requests: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.event.issue.number }}
+  cancel-in-progress: false
+
+jobs:
+  stale-waiting-for-feedback:
+    if: github.event_name == 'schedule'
+    name: 'Manage issues, PRs with waiting-for-feedback label'
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/stale@5bef64f19d7facfb25b37b414482c7164d639639 # v9
+        with:
+          days-before-stale: '60'
+          days-before-close: '30'
+          stale-issue-message: 'This issue is stale because it has been waiting for feedback for 60 days. Remove the stale label or comment on this issue, or it will be automatically closed in 30 days.'
+          close-issue-message: 'This issue has been closed because no response was received within 90 days.'
+          stale-pr-message: 'This pull request is stale because it has been waiting for feedback for 60 days. Remove the stale label or comment on this PR, or it will be automatically closed in 30 days.'
+          close-pr-message: 'This pull request has been closed because no response was received within 90 days.'
+          any-of-labels: 'waiting-for-feedback'
+          exempt-all-milestones: 'true'
+          exempt-issue-labels: 'priority:blocker,priority:critical'
+          exempt-pr-labels: 'priority:blocker,priority:critical'
+
+  remove-waiting-for-feedback:
+    if: github.event_name == 'issue_comment' && github.event.action == 'created' && contains(github.event.issue.labels.*.name, 'waiting-for-feedback')
+    name: 'Remove waiting-for-feedback label'
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7
+        with:
+          script: |
+            
+            const result = await github.rest.issues.removeLabel({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                name: 'waiting-for-feedback'
+              });
+            
+              console.log(result);
