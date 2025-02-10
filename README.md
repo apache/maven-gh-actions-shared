@@ -335,8 +335,6 @@ on:
   pull_request_target:
     types:
       - closed
-      - unlabeled
-      - review_requested
 
 jobs:
   pr-automation:
@@ -348,7 +346,7 @@ jobs:
 We need a use `pull_request_target` event because we need `GITHUB_TOKEN` with write permission
 to update labels, milestones of PR from forked repositories.
 
-After approval or merged:
+After merged:
 - default label - `maintenance` will be added
 - current milestone will be set
 
