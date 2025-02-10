@@ -94,7 +94,7 @@ module.exports = [
     {
         name: "waiting-for-feedback",
         color: "ffffff",
-        description: "Waiting for 4 weeks until issues or pull request will be closed"
+        description: "Waiting for 90 days until issues or pull request will be closed"
     },
     {
         name: "wontfix",
