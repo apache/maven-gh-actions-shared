@@ -34,54 +34,13 @@ concurrency:
 permissions: {}
 
 jobs:
-  # read current PR approval status
-  review-decision:
-    if: github.event.pull_request.draft == false
-    runs-on: ubuntu-latest
-    outputs:
-      approved: ${{ steps.review-decision.outputs.result }}
-
-    steps:
-      - name: Dump GitHub context
-        env:
-          GITHUB_CONTEXT: ${{ toJson(github) }}
-        run: echo "$GITHUB_CONTEXT"
-
-      - name: Get Review decision
-        id: review-decision
-        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7
-        with:
-          result-encoding: string
-          script: |
-            const query = `query($owner:String!, $name:String!, $number:Int!) {
-              repository(name: $name, owner: $owner) {
-                pullRequest(number: $number) {
-                  reviewDecision, merged
-                }
-              }
-            }`;
-            
-            const variables = {
-              owner: context.repo.owner,
-              name: context.repo.repo,
-              number: context.issue.number
-            }
-            
-            const result = await github.graphql(query, variables)
-            console.log(result)
-            
-            return result.repository.pullRequest.reviewDecision == 'APPROVED' || result.repository.pullRequest.merged
-      - name: Result
-        run: echo "${{ steps.review-decision.outputs.result }}"
-
   # check PR milestone - if not set - update with current opened milestone
   milestone:
     permissions:
       issues: write
       pull-requests: write
 
-    needs: review-decision
-    if: (needs.review-decision.outputs.approved == 'true' || (github.event.action == 'demilestoned' && github.event.pull_request.state == 'open')) && !github.event.pull_request.milestone
+    if: github.event.action == 'closed' && github.event.pull_request.merged  && !github.event.pull_request.milestone
     runs-on: ubuntu-latest
     steps:
       - name: Update milestone
@@ -128,8 +87,7 @@ jobs:
       issues: write
       pull-requests: write
 
-    needs: review-decision
-    if: (needs.review-decision.outputs.approved == 'true' || (github.event.action == 'unlabeled' && github.event.pull_request.state == 'open')) && toJSON(github.event.pull_request.labels) == '[]'
+    if: github.event.action == 'closed' && github.event.pull_request.merged && toJSON(github.event.pull_request.labels) == '[]'
     runs-on: ubuntu-latest
     steps:
 
