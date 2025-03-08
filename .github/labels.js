@@ -67,6 +67,11 @@ module.exports = [
         description: ""
     },
     {
+        name: "skip-changelog",
+        color: "e4e669",
+        description: "Skip this PR from automatically changelog generation"
+    },
+    {
         name: "priority:blocker",
         color: "cc0000",
         description: "Blocks development and/or testing work, production could not run"
