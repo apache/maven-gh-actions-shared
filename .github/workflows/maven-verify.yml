@@ -53,7 +53,7 @@ on:
       maven4-version:
         description: The Maven 4.x version matrix
         required: false
-        default: '4.0.0-rc-2'
+        default: '4.0.0-rc-3'
         type: string
 
       maven4-enabled:
@@ -218,7 +218,7 @@ jobs:
           if [ "${{ inputs.maven4-build }}" = "true" ]; then
             echo "version=${{ inputs.maven4-version }}" >> $GITHUB_OUTPUT
           else
-            echo "version=${{ inputs.ff-maven }}" >> $GITHUB_OUTPUT 
+            echo "version=${{ inputs.ff-maven }}" >> $GITHUB_OUTPUT
           fi
           cat $GITHUB_OUTPUT
 
