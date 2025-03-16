@@ -24,50 +24,64 @@ filter-by-commitish: true
 
 # Emoji reference: https://gitmoji.carloscuesta.me/
 categories:
+
   - title: ":boom: Breaking changes"
     labels: 
       - breaking
+
   - title: 🚨 Removed
     label: removed
+
+  - title: ⚠️ Deprecated
+    label: deprecated
+
   - title: ":tada: Major features and improvements"
     labels:
       - major-enhancement
       - major-rfe
+
   - title: 🐛 Major bug fixes
     labels:
       - major-bug
-  - title: ⚠️ Deprecated
-    label: deprecated
+
   - title: 🚀 New features and improvements
     labels:
       - enhancement
       - feature
       - rfe
+
   - title: 🐛 Bug Fixes
     labels:
       - bug
       - fix
       - bugfix
       - regression
+
   - title: ":construction_worker: Changes for developers"
     labels:
       - developer 
-  # Default label used by Dependabot
-  - title: 📦 Dependency updates
-    label: dependencies
+
   - title: 📝 Documentation updates
     label: documentation
+
   - title: 👻 Maintenance
     labels: 
       - chore
       - internal
       - maintenance
+
   - title: 🔧 Build
     label: build      
+
   - title: 🚦 Tests
     labels: 
       - test
       - tests
+
+  # Default label used by Dependabot
+  - title: 📦 Dependency updates
+    label: dependencies
+
 exclude-labels:
   - reverted
   - no-changelog
