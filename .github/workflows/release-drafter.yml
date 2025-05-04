@@ -34,7 +34,7 @@ concurrency: release-drafter
 jobs:
   detect-version:
     # skip release drafter on releases commits
-    if: (!startsWith(github.event.head_commit.message , '[maven-release-plugin]'))
+    if: (!startsWith(github.event.head_commit.message , '[maven-release-plugin] prepare for next development iteration'))
 
     name: Detect version
     runs-on: ubuntu-latest
