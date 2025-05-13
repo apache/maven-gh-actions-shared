@@ -34,6 +34,18 @@ concurrency:
 permissions: {}
 
 jobs:
+  # dump GitHub context only when the workflow is re runed,
+  # can help investigate problems
+  dump-github-context:
+    runs-on: ubuntu-latest
+    if: github.run_attempt > 1
+
+    steps:
+      - run: echo "ok"
+        env:
+          GITHUB_CONTEXT: ${{ toJson(github) }}
+        shell: bash
+
   # check PR milestone - if not set - update with current opened milestone
   milestone:
     permissions:
