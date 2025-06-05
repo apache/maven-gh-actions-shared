@@ -67,6 +67,26 @@ module.exports = [
         description: ""
     },
     {
+        name: "build",
+        color: "912E29",
+        description: "Pull requests that change the build process"
+    },
+    {
+        name: "breaking",
+        color: "e4e669",
+        description: "Pull requests that break existing features"
+    },
+    {
+        name: "deprecated",
+        color: "C70132",
+        description: "Pull requests that deprecate features"
+    },
+    {
+        name: "removed",
+        color: "BC7855",
+        description: "Pull requests that remove features"
+    },
+    {
         name: "skip-changelog",
         color: "e4e669",
         description: "Skip this PR from automatically changelog generation"
