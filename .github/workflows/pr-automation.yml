@@ -52,7 +52,11 @@ jobs:
       issues: write
       pull-requests: write
 
-    if: github.event.action == 'closed' && github.event.pull_request.merged  && !github.event.pull_request.milestone
+    if: >
+      github.event.action == 'closed' && 
+      github.event.pull_request.merged  && 
+      !github.event.pull_request.milestone &&
+      !contains(github.event.pull_request.labels.*.name, 'skip-changelog')
     runs-on: ubuntu-latest
     steps:
       - name: Update milestone
@@ -99,7 +103,10 @@ jobs:
       issues: write
       pull-requests: write
 
-    if: github.event.action == 'closed' && github.event.pull_request.merged && toJSON(github.event.pull_request.labels) == '[]'
+    if: >
+      github.event.action == 'closed' && 
+      github.event.pull_request.merged && 
+      toJSON(github.event.pull_request.labels) == '[]'
     runs-on: ubuntu-latest
     steps:
 
@@ -134,7 +141,10 @@ jobs:
       issues: write
       pull-requests: write
 
-    if: github.event.action == 'closed' && github.event.pull_request.merged && toJSON(github.event.pull_request.assignees) == '[]'
+    if: >
+      github.event.action == 'closed' && 
+      github.event.pull_request.merged && 
+      toJSON(github.event.pull_request.assignees) == '[]'
     runs-on: ubuntu-latest
     steps:
 
