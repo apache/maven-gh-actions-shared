@@ -47,7 +47,7 @@ on:
       maven-matrix:
         description: The Maven version matrix as json array
         required: false
-        default: '[ "3.6.3", "3.9.9" ]'
+        default: '[ "3.6.3", "3.9.10" ]'
         type: string
 
       maven4-version:
@@ -114,7 +114,7 @@ on:
       ff-maven:
         description: The Maven version used during fail-fast-build job
         required: false
-        default: '3.9.9'
+        default: '3.9.10'
         type: string
 
       ff-jdk:
