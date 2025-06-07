@@ -97,6 +97,32 @@ jobs:
             
             console.log(result);
 
+  # check PR milestone - remove for not merged PR or with skip-changelog label
+  milestone-rm:
+    permissions:
+      issues: write
+      pull-requests: write
+
+    if: >
+      github.event.action == 'closed' && 
+      (!github.event.pull_request.merged || contains(github.event.pull_request.labels.*.name, 'skip-changelog')) && 
+      github.event.pull_request.milestone
+    runs-on: ubuntu-latest
+    steps:
+      - name: Remove milestone
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7
+        with:
+          script: |
+
+            const result = await github.rest.issues.update({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              milestone: null
+            });
+            
+            console.log(result);
+
   # check PR labels - if is empty list add one default
   labels:
     permissions:
