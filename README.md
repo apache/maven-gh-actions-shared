@@ -348,8 +348,11 @@ to update labels, milestones of PR from forked repositories.
 
 After the PR got merged each of the following actions are checked and applied if not already set:
 - default label - `maintenance` will be added
-- current milestone will be set
+- current milestone will be set unless PR has `skip-changelog` label
 - will be assigned to person who merged PR
+
+After the PR got closed without merge or has `skip-changelog` label
+-  current milestone will be removed if was set
 
 ## milestone configuration
 
