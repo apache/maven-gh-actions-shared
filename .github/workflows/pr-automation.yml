@@ -73,6 +73,13 @@ jobs:
             const branch = context.payload.pull_request.base.ref
             
             if (milestones.data.length == 0) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: '@' + context.payload.pull_request.merged_by.login +
+                ' There are no open milestones ... please create one'
+              });
               throw new Error('There are no open milestones ... please create one')
             }
 
@@ -80,6 +87,13 @@ jobs:
             if (milestones.data.length > 1) {
               milestone = milestones.data.find(({description}) => description?.includes('branch: ' + branch));
               if (!milestone) {
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: context.issue.number,
+                  body: '@' + context.payload.pull_request.merged_by.login +
+                  ' There are more then oen open milestones ... please add a "branch: ' + branch + '" to description in one milestone'
+                });
                 throw new Error('There are more then oen open milestones ... please add a "branch: ' + branch + '" to description in one milestone');
               }
             } else {
