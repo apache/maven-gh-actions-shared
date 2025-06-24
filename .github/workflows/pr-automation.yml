@@ -78,9 +78,9 @@ jobs:
                 repo: context.repo.repo,
                 issue_number: context.issue.number,
                 body: '@' + context.payload.pull_request.merged_by.login +
-                ' There are no open milestones ... please create one'
+                ' The PR can't be associated to a milestone, because there is no open milestone. Please create a new milestone before merge.'
               });
-              throw new Error('There are no open milestones ... please create one')
+              throw new Error('The PR can't be associated to a milestone, because there is no open milestone. Please create a new milestone before merge.')
             }
 
             var milestone;
@@ -92,9 +92,9 @@ jobs:
                   repo: context.repo.repo,
                   issue_number: context.issue.number,
                   body: '@' + context.payload.pull_request.merged_by.login +
-                  ' There are more then oen open milestones ... please add a "branch: ' + branch + '" to description in one milestone'
+                  ' The PR can't be associated to a milestone, because there are multiple open milestones. Please add the text "branch: ' + branch + '" to the description to the milestone where this PR belongs to.'
                 });
-                throw new Error('There are more then oen open milestones ... please add a "branch: ' + branch + '" to description in one milestone');
+                throw new Error('The PR can't be associated to a milestone, because there are multiple open milestones. Please add the text "branch: ' + branch + '" to the description to the milestone where this PR belongs to.');
               }
             } else {
               milestone = milestones.data[0];
