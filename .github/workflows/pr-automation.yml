@@ -22,7 +22,7 @@ on:
       default-label:
         description: The default label to add to PR
         required: false
-        default: 'maintenance'
+        default: 'skip-changelog'
         type: string
 
 # allow single build per branch or PR
