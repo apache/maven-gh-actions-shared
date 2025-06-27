@@ -328,7 +328,9 @@ jobs:
         run: ./mvnw clean --errors --batch-mode --show-version "-Dmaven.clean.retryOnError"
 
   verify:
-    if: (!cancelled()) && inputs.matrix-enabled && ( !inputs.ff-run || needs.fail-fast-build.result == 'success' )
+    if: >
+      (!cancelled()) && inputs.matrix-enabled && ( !inputs.ff-run || needs.fail-fast-build.result == 'success' ) &&
+      !startsWith(github.event.head_commit.message , '[maven-release-plugin] prepare release')
     needs: [setup-maven-version, fail-fast-build]
     name: ${{ matrix.os }} jdk-${{ matrix.jdk }}-${{ matrix.distribution }} ${{ matrix.maven }}
     timeout-minutes: ${{ inputs.timeout-minutes }}
