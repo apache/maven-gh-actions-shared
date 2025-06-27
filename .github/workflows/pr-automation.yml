@@ -149,31 +149,11 @@ jobs:
       toJSON(github.event.pull_request.labels) == '[]'
     runs-on: ubuntu-latest
     steps:
-
-      - name: Set default label
-        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7
-        env:
-          DEFAULT_LABEL: ${{ inputs.default-label }}
-        with:
-          script: |
-            
-            console.log(context.issue.labels);
-            
-            if ( !context.issue.labels?.length ) {
-            
-              if ( !process.env.DEFAULT_LABEL ) {
-                throw new ERROR('There are no labels on PR and default label is not set');
-              }
-            
-              const result = await github.rest.issues.update({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: context.issue.number,
-                labels: [ process.env.DEFAULT_LABEL ]
-              });
-            
-              console.log(result);
-            }
+      - name: Check PR labels
+        if: ${{ github.event_name == 'pull_request' && join(github.event.pull_request.labels.*.name) == '' }}
+        run: |
+          echo "::error::PRs must be labeled"
+          exit 1
 
   # check PR assignee - if no one is assigned, assign to person who merge PR
   assignees:
