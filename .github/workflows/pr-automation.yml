@@ -137,16 +137,8 @@ jobs:
             
             console.log(result);
 
-  # check PR labels - if is empty list add one default
+  # check PR labels - if is empty fail 
   labels:
-    permissions:
-      issues: write
-      pull-requests: write
-
-    if: >
-      github.event.action == 'closed' && 
-      github.event.pull_request.merged && 
-      toJSON(github.event.pull_request.labels) == '[]'
     runs-on: ubuntu-latest
     steps:
       - name: Check PR labels
