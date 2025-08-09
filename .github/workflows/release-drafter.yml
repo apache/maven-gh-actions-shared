@@ -28,13 +28,6 @@ on:
         required: false
         type: string
         default: 'release-drafter.yml'
-      commitish:
-        description: |
-          The release target, i.e. branch or commit it should point to. 
-          Default: current github.ref
-        required: false
-        type: string
-        default: ${{ github.ref }}
 
 concurrency: release-drafter
 
@@ -88,6 +81,6 @@ jobs:
         with:
           config-name: ${{ inputs.config-name }}
           version: ${{ needs.detect-version.outputs.version }}
-          commitish: ${{ inputs.commitish }}
+          commitish: ${{ github.ref }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
