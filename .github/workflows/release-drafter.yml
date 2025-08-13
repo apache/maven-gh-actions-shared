@@ -28,6 +28,12 @@ on:
         required: false
         type: string
         default: 'release-drafter.yml'
+      commits-since:
+        description: | 
+          A date in ISO format marking the initial commit for the release draft. This is applied only when no prior release is available.
+        required: false
+        type: string
+
 
 concurrency: release-drafter
 
@@ -77,12 +83,13 @@ jobs:
       contents: write
     runs-on: ubuntu-latest
     steps:
-      - uses: release-drafter/release-drafter@b1476f6e6eb133afa41ed8589daba6dc69b4d3f5  # v6
+      - uses: apache/maven-gh-actions-shared@release-drafter # temporary copy of the release-drafter action
         id: release-drafter
         with:
           config-name: ${{ inputs.config-name }}
           version: ${{ needs.detect-version.outputs.version }}
           commitish: ${{ github.ref }}
+          commits-since: ${{ inputs.commits-since }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
