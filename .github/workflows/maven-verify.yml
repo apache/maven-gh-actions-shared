@@ -210,10 +210,6 @@ jobs:
       exclude-matrix: ${{ steps.exclude.outputs.matrix }}
 
     steps:
-      - name: Show IP
-        run: curl --silent https://api.ipify.org
-        shell: bash
-
       - id: version
         name: setup Maven version for ff
         run: |
@@ -265,10 +261,6 @@ jobs:
     if: inputs.ff-run
 
     steps:
-      - name: Show IP
-        run: curl --silent https://api.ipify.org
-        shell: bash
-
       - name: Install Subversion on Ubuntu
         if: inputs.install-subversion && runner.os == 'Linux'
         run: sudo apt install subversion
@@ -358,11 +350,6 @@ jobs:
           (inputs.maven4-build && matrix.maven != inputs.maven4-version) ||
           inputs.verify-goal != inputs.ff-goal
         run: echo ok
-
-      - name: Show IP
-        if: steps.should-run.conclusion == 'success'
-        run: curl --silent https://api.ipify.org
-        shell: bash
 
       # Some projects (like Maven SCM) need the command-line tools for all SCMs installed.
       # Git and Subversion are installed on all by default.
