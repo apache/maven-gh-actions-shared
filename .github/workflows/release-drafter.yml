@@ -78,9 +78,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: release-drafter/release-drafter@b1476f6e6eb133afa41ed8589daba6dc69b4d3f5  # v6
+        id: release-drafter
         with:
           config-name: ${{ inputs.config-name }}
           version: ${{ needs.detect-version.outputs.version }}
           commitish: ${{ github.ref }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Verify release drafter status
+        if: steps.release-drafter.outputs.id == ''
+        run: exit 1
