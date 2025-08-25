@@ -35,7 +35,9 @@ on:
         type: string
 
 
-concurrency: release-drafter
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
   detect-version:
