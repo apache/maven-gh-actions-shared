@@ -109,8 +109,6 @@ jobs:
               milestone: milestone.number
             });
 
-            console.log(result);
-
   # check PR milestone - remove for not merged PR or with skip-changelog label
   milestone-rm:
     permissions:
@@ -135,9 +133,8 @@ jobs:
               milestone: null
             });
 
-            console.log(result);
 
-  # check PR labels - if is empty list add one default
+  # check PR labels - if is empty list add comments and break the build
   labels:
     permissions:
       issues: write
@@ -154,6 +151,17 @@ jobs:
         with:
           script: |
 
+            const issue = await github.rest.issues.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number
+            });
+            
+            if (issue.data.labels.length > 0) {          
+              console.log('PR already has labels, skipping');
+              return;
+            }
+                        
             await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
@@ -182,8 +190,16 @@ jobs:
         with:
           script: |
 
-            console.log(context.payload.pull_request);
-            console.log(context.payload.pull_request.merged_by);
+            const issue = await github.rest.issues.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number
+            });
+            
+            if (issue.data.assignees.length > 0) {
+              console.log('PR already has assignees, skipping');
+              return;
+            }
 
             const result = await github.rest.issues.update({
               owner: context.repo.owner,
@@ -192,4 +208,3 @@ jobs:
               assignees: [ context.payload.pull_request.merged_by.login ]
             });
 
-            console.log(result);
