@@ -37,7 +37,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/stale@5bef64f19d7facfb25b37b414482c7164d639639 # v9
+      - uses: actions/stale@3a9db7e6a41a89f618792c92c0e97cc736e1b13f # v10
         with:
           days-before-stale: '60'
           days-before-close: '30'
@@ -52,7 +52,7 @@ jobs:
 
   remove-labels:
     if: >
-      github.event_name == 'issue_comment' && github.event.action == 'created' && 
+      github.event_name == 'issue_comment' && github.event.action == 'created' &&
       (contains(github.event.issue.labels.*.name, 'waiting-for-feedback') || contains(github.event.issue.labels.*.name, 'Stale'))
     name: 'Remove waiting-for-feedback label'
     runs-on: ubuntu-latest
@@ -63,14 +63,14 @@ jobs:
         if: contains(github.event.issue.labels.*.name, 'waiting-for-feedback')
         with:
           script: |
-            
+
             const result = await github.rest.issues.removeLabel({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 issue_number: context.issue.number,
                 name: 'waiting-for-feedback'
               });
-            
+
               console.log(result);
 
       - uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7
@@ -78,12 +78,12 @@ jobs:
         if: contains(github.event.issue.labels.*.name, 'Stale')
         with:
           script: |
-            
+
             const result = await github.rest.issues.removeLabel({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 issue_number: context.issue.number,
                 name: 'Stale'
               });
-            
+
               console.log(result);
