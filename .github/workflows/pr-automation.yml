@@ -53,14 +53,14 @@ jobs:
       pull-requests: write
 
     if: >
-      github.event.action == 'closed' && 
-      github.event.pull_request.merged  && 
+      github.event.action == 'closed' &&
+      github.event.pull_request.merged  &&
       !github.event.pull_request.milestone &&
       !contains(github.event.pull_request.labels.*.name, 'skip-changelog')
     runs-on: ubuntu-latest
     steps:
       - name: Update milestone
-        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
         with:
           script: |
             const milestones = await github.rest.issues.listMilestones({
@@ -68,10 +68,10 @@ jobs:
               repo: context.repo.repo,
               state: 'open'
             });
-            
+
             console.log(milestones);
             const branch = context.payload.pull_request.base.ref
-            
+
             if (milestones.data.length == 0) {
               await github.rest.issues.createComment({
                 owner: context.repo.owner,
@@ -99,16 +99,16 @@ jobs:
             } else {
               milestone = milestones.data[0];
             }
-            
+
             console.log('Set milestone to: ' + milestone.title);
-            
+
             const result = await github.rest.issues.update({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: context.issue.number,
               milestone: milestone.number
             });
-            
+
             console.log(result);
 
   # check PR milestone - remove for not merged PR or with skip-changelog label
@@ -118,13 +118,13 @@ jobs:
       pull-requests: write
 
     if: >
-      github.event.action == 'closed' && 
-      (!github.event.pull_request.merged || contains(github.event.pull_request.labels.*.name, 'skip-changelog')) && 
+      github.event.action == 'closed' &&
+      (!github.event.pull_request.merged || contains(github.event.pull_request.labels.*.name, 'skip-changelog')) &&
       github.event.pull_request.milestone
     runs-on: ubuntu-latest
     steps:
       - name: Remove milestone
-        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
         with:
           script: |
 
@@ -134,7 +134,7 @@ jobs:
               issue_number: context.issue.number,
               milestone: null
             });
-            
+
             console.log(result);
 
   # check PR labels - if is empty list add one default
@@ -144,16 +144,16 @@ jobs:
       pull-requests: write
 
     if: >
-      github.event.action == 'closed' && 
-      github.event.pull_request.merged && 
+      github.event.action == 'closed' &&
+      github.event.pull_request.merged &&
       toJSON(github.event.pull_request.labels) == '[]'
     runs-on: ubuntu-latest
     steps:
       - name: Comment PR
-        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
         with:
           script: |
-            
+
             await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
@@ -171,25 +171,25 @@ jobs:
       pull-requests: write
 
     if: >
-      github.event.action == 'closed' && 
-      github.event.pull_request.merged && 
+      github.event.action == 'closed' &&
+      github.event.pull_request.merged &&
       toJSON(github.event.pull_request.assignees) == '[]'
     runs-on: ubuntu-latest
     steps:
 
       - name: Assign PR
-        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
         with:
           script: |
-            
+
             console.log(context.payload.pull_request);
             console.log(context.payload.pull_request.merged_by);
-                        
+
             const result = await github.rest.issues.update({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: context.issue.number,
               assignees: [ context.payload.pull_request.merged_by.login ]
             });
-          
+
             console.log(result);
