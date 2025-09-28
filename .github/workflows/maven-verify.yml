@@ -35,7 +35,7 @@ on:
       jdk-matrix:
         description: jdk matrix as json array
         required: false
-        default: '[ "17", "21", "8" ]'
+        default: '[ "21", "25", "8" ]'
         type: string
 
       jdk-distribution-matrix:
@@ -202,7 +202,7 @@ jobs:
     runs-on: "ubuntu-latest"
     # execute on any push or pull request from forked repo, skip release commit
     if: >
-      (github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork)) && 
+      (github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork)) &&
       !startsWith(github.event.head_commit.message , '[maven-release-plugin] prepare release')
     outputs:
       version: ${{ steps.version.outputs.version }}
