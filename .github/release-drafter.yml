@@ -95,5 +95,9 @@ template: |
   $CHANGES
   
 replacers:
-  - search: '/\[(.*)-(\d+)\]*\s*-*\s*/g'
-    replace: '[[$1-$2]](https://issues.apache.org/jira/browse/$1-$2) - '  
+  # Strip backport branch prefixes like [maven-4.0.x], [maven-3.x], etc.
+  - search: '/\[maven(-[a-z0-9.]+)+\]\s*-?\s*/g'
+    replace: ''
+  # Convert JIRA ticket references to links (but not maven branch prefixes)
+  - search: '/\[([A-Z]+)-([0-9]+)\]\s*-?\s*/g'
+    replace: '[[$1-$2]](https://issues.apache.org/jira/browse/$1-$2) - '
