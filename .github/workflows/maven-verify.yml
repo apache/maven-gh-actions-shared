@@ -297,7 +297,7 @@ jobs:
         if: inputs.ff-site-run
 
       - name: Upload Maven Site
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v4
         if: inputs.ff-site-run
         with:
           name: ${{ github.run_number }}-site-${{ inputs.ff-os }}-${{ inputs.ff-jdk }}-${{ inputs.ff-jdk-distribution }}-${{ needs.setup-maven-version.outputs.version }}
@@ -305,7 +305,7 @@ jobs:
             target/staging/**
 
       - name: Upload artifact on failure
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v4
         if: failure() && inputs.failure-upload-path != ''
         with:
           name: ${{ github.run_number }}-failure-${{ inputs.ff-os }}-${{ inputs.ff-jdk }}-${{ inputs.ff-jdk-distribution }}-${{ needs.setup-maven-version.outputs.version }}
@@ -424,7 +424,7 @@ jobs:
         run: ./mvnw --errors --batch-mode --show-version ${{ inputs.maven-args }} ${{ inputs.verify-goal }}
 
       - name: Upload artifact on failure
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v4
         if: steps.should-run.conclusion == 'success' && failure() && inputs.failure-upload-path != ''
         with:
           name: ${{ github.run_number }}-failure-${{ matrix.os }}-${{ matrix.jdk }}-${{ matrix.distribution }}-${{ matrix.maven }}
