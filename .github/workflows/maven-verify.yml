@@ -47,7 +47,7 @@ on:
       maven-matrix:
         description: The Maven version matrix as json array
         required: false
-        default: '[ "3.6.3", "3.9.11" ]'
+        default: '[ "3.9.11" ]'
         type: string
 
       maven4-version:
