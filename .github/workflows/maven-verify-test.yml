@@ -25,6 +25,8 @@ jobs:
   verify-1:
     name: Verify 1
     uses: ./.github/workflows/maven-verify.yml
+    with:
+      install-subversion: true
 
   # override fail fast config
   verify-2:

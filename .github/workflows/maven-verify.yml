@@ -261,13 +261,9 @@ jobs:
     if: inputs.ff-run
 
     steps:
-      - name: Install Subversion on Ubuntu
-        if: inputs.install-subversion && runner.os == 'Linux'
-        run: sudo apt install subversion
-
-      - name: Install Subversion on MacOS
-        if: inputs.install-subversion && runner.os == 'MacOS'
-        run: brew install subversion
+      - name: Install Subversion
+        if: inputs.install-subversion
+        uses: apache/maven-gh-actions-shared/.github/actions/install-svn@v4
 
       - name: Show free disk space
         run: df -h
@@ -363,21 +359,9 @@ jobs:
         run: |
           brew install mercurial
 
-      - name: Install Subversion on Ubuntu
-        if: >
-          inputs.install-subversion &&
-          steps.should-run.conclusion == 'success' &&
-          runner.os == 'Linux'
-        run: |
-          sudo apt install subversion
-
-      - name: Install Subversion on MacOS
-        if: >
-          inputs.install-subversion &&
-          steps.should-run.conclusion == 'success' &&
-          runner.os == 'MacOS'
-        run: |
-          brew install subversion
+      - name: Install Subversion
+        if: inputs.install-subversion && steps.should-run.conclusion == 'success'
+        uses: apache/maven-gh-actions-shared/.github/actions/install-svn@v4
 
       - name: Install GnuPG
         if: >
