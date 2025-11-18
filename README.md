@@ -16,10 +16,11 @@
 -->
 # Apache Maven Shared GitHub Actions
 
+current branch is [v4](https://github.com/apache/maven-gh-actions-shared/tree/v4)
 
 # Usage
 
-Create GitHub workflow in project file:
+Create GitHub workflow in project workspace referencing [shared `maven-verify.yml@v4`](https://github.com/apache/maven-gh-actions-shared/blob/v4/.github/workflows/maven-verify.yml):
 
 ```
 .github/workflows/maven-verify.yml
@@ -57,21 +58,22 @@ jobs:
     uses: apache/maven-gh-actions-shared/.github/workflows/maven-verify.yml@v4
 
 ```
+
 ## Events that can trigger workflows
 
-In such configuration workflow can be executed in the same time twice for two separate events.
+In such configuration, workflow can be executed at the same time twice for two separate events.
 
-It can occurs when we create PR for branch from the same repository, we have two events:
+It can occur when we create PR for branch from the same repository, we have two events:
 - `push` on branch
 - `pull_request` on PR for the same branch
 
-In order to minimize resource consumptions shared workflow from version `v2` 
-detect such situation and skips the execution for `pull_request` event 
-if `PR` is created for local branch.
+In order to minimize resource consumption, shared workflow from version `v2`
+detect such situation and skip the execution for `pull_request` event
+if `PR` is created for local branch: see #30.
 
 Only workflow for PR from external forks will be executed.
 
-## Breaking changes in V3 
+## Breaking changes in V3
 
  - replace `maven_version` by `maven-matrix` and `ff-maven`
  - rename `maven_args` to `maven-args`
@@ -90,7 +92,8 @@ We can store some logs of execution in case of failure as workflow attachments:
       failure-upload-path: |
         **/target/surefire-reports/*
 ```
-## Excludes from build matrix:
+
+## Excludes from build matrix
 
 ```yaml
 ...
@@ -144,7 +147,7 @@ We can store some logs of execution in case of failure as workflow attachments:
       maven4-build: true
 ```
 
-## Disable matrix build - only fail-fast build 
+## Disable matrix build - only fail-fast build
 
 ```yaml
 ...
@@ -152,18 +155,19 @@ We can store some logs of execution in case of failure as workflow attachments:
     with:
       matrix-enabled: false
 ```
- 
+
 ## More options
 
 More options with default values can be found in workflow source in `inputs` section:
 
 https://github.com/apache/maven-gh-actions-shared/blob/v4/.github/workflows/maven-verify.yml
 
+
 # Release drafter configuration
 
 ## Only default branch
 
-We need to add an action:
+We need to add an action referencing [shared `release-drafter.yml@v4`](https://github.com/apache/maven-gh-actions-shared/blob/v4/.github/workflows/release-drafter.yml):
 
 ```
 .github/workflows/release-drafter.yml
@@ -376,7 +380,7 @@ Please create new [Personal access tokens (classic)](https://github.com/settings
 
 # Management of stale issues and PRs
 
-We need an action in project:
+We need an action in project referencing [shared `stale.yml@v4`](https://github.com/apache/maven-gh-actions-shared/blob/v4/.github/workflows/stale.yml):
 
 ```yml
 .github/workflows/stale.yml
@@ -429,4 +433,3 @@ The cron time definition can be randomly changed to avoid executing at the same 
 
 - [Workflow syntax](https://docs.github.com/en/actions/learn-github-actions/workflow-syntax-for-github-actions)
 - [Reusing workflows](https://docs.github.com/en/actions/learn-github-actions/reusing-workflows)
-
