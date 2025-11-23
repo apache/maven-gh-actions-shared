@@ -39,14 +39,13 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: false
 
+# clare all permissions for GITHUB_TOKEN
+permissions: {}
+
 jobs:
   detect-version:
-    # skip release drafter on releases commits
-    if: (!startsWith(github.event.head_commit.message , '[maven-release-plugin] prepare for next development iteration'))
-
     name: Detect version
     runs-on: ubuntu-latest
-    permissions: {}
     outputs:
       version: ${{ steps.version.outputs.version }}
 
@@ -84,6 +83,11 @@ jobs:
       # write permission is required to create a github release
       contents: write
     runs-on: ubuntu-latest
+    # skip release drafter on next development commits
+    if: >
+      needs.detect-version.outputs.version != '' &&
+      !startsWith(github.event.head_commit.message , '[maven-release-plugin] prepare for next development iteration')
+
     steps:
       - uses: apache/maven-gh-actions-shared@release-drafter # temporary copy of the release-drafter action
         id: release-drafter
@@ -98,3 +102,87 @@ jobs:
       - name: Verify release drafter status
         if: steps.release-drafter.outputs.id == ''
         run: exit 1
+
+  milestones-managment:
+    name: Milestones Management
+    needs: detect-version
+    permissions:
+      # write permission is required to manage milestones
+      issues: write
+    runs-on: ubuntu-latest
+    # execute only on next development commits
+    if: >
+      needs.detect-version.outputs.version != '' &&
+      startsWith(github.event.head_commit.message , '[maven-release-plugin] prepare for next development iteration')
+
+    steps:
+      - uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
+        env:
+          CURRENT_VERSION: ${{ needs.detect-version.outputs.version }}
+        with:
+          script: |
+            const branch = context.ref.replace('refs/heads/', '');
+            const version = process.env.CURRENT_VERSION;
+            
+            console.log('branch: ' + branch);
+            console.log('version: ' + version);
+            
+            const milestones = await github.rest.issues.listMilestones({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open'
+            });
+            
+            console.log('All open milestones: ');
+            console.log(milestones.data);
+            
+            var milestone;
+            if (milestones.data.length > 1) {
+              milestone = milestones.data.find(({description}) => description?.includes('branch: ' + branch));
+            } else if (milestones.data.length == 1) {
+              milestone = milestones.data[0];
+            }
+            
+            console.log('Current milestone: ');
+            console.log(milestone);
+            
+            core.summary.addHeading('Milestone management');
+            
+            // in first step just create new milestone - closing the old one will be in the next step
+            // if something fails here - we don't want to close the existing milestone
+            const resultNew = await github.rest.issues.createMilestone({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: version,
+                description: 'branch: ' + branch
+            });
+            
+            console.log('Created new milestone: ');
+            console.log(resultNew.data);
+            
+            core.summary.addRaw('New milestone: ');
+            core.summary.addLink(resultNew.data.title, resultNew.data.html_url);
+            core.summary.addBreak();
+            
+            // now close the existing milestone
+            if (milestone) {
+              const resultOld = await github.rest.issues.updateMilestone({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                milestone_number: milestone.number,
+                state: 'closed'
+              });
+            
+              console.log('Closed old milestone: ');
+              console.log(resultOld.data);
+            
+              core.summary.addRaw('Closed milestone: ');
+              core.summary.addLink(milestone.title, milestone.html_url);
+              core.summary.addBreak();
+            } else {
+              console.log('No existing milestone to close');
+              core.summary.addRaw('No existing milestone to close - please verify');
+              core.summary.addBreak();
+            }
+            
+            core.summary.write();
