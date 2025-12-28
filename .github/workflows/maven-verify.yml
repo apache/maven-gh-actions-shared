@@ -41,7 +41,7 @@ on:
       jdk-distribution-matrix:
         description: jdk distribution matrix
         required: false
-        default: '[ "zulu" ]'
+        default: '[ "temurin", "zulu" ]'
         type: string
 
       maven-matrix:
