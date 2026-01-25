@@ -18,7 +18,6 @@ github:
     v2: { }
     v3: { }
     v4: { }
-    release-drafter: { } # fork of release-drafter,  waiting for PR merge release-drafter/release-drafter#1451
   pull_requests:
     del_branch_on_merge: true
   features:
