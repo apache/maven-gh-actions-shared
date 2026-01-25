@@ -28,9 +28,9 @@ on:
         required: false
         type: string
         default: 'release-drafter.yml'
-      commits-since:
-        description: | 
-          A date in ISO format marking the initial commit for the release draft. This is applied only when no prior release is available.
+      initial-commits-since:
+        description: |
+          A date in ISO format (eg: '2025-06-18T10:29:51Z') marking the initial commit for the release draft. This is applied only when no prior release is available.
         required: false
         type: string
 
@@ -89,13 +89,13 @@ jobs:
       !startsWith(github.event.head_commit.message , '[maven-release-plugin] prepare for next development iteration')
 
     steps:
-      - uses: apache/maven-gh-actions-shared@release-drafter # temporary copy of the release-drafter action
+      - uses: release-drafter/release-drafter@6db134d15f3909ccc9eefd369f02bd1e9cffdf97  # v6.2.0
         id: release-drafter
         with:
           config-name: ${{ inputs.config-name }}
           version: ${{ needs.detect-version.outputs.version }}
           commitish: ${{ github.ref }}
-          commits-since: ${{ inputs.commits-since }}
+          initial-commits-since: ${{ inputs.initial-commits-since }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
