@@ -238,44 +238,24 @@ tag-template: <project-tag-prefix>-$RESOLVED_VERSION
 
 ## Multiple versions from multiple branches
 
-We need change a branch name in `.github/workflows/release-drafter.yml` in each branch:
+We need change a branch name in `.github/workflows/release-drafter.yml`, and add `initial-commits-since` 
+in each branch:
 
 ```yml
 name: Release Drafter
 on:
   push:
     branches:
-      - branch-name # <---
+      - branch-name # e.g., maven-4.0.x
   workflow_dispatch:
+
+jobs:
+  update_release_draft:
+    uses: apache/maven-gh-actions-shared/.github/workflows/release-drafter.yml@v4
+    with:
+      initial-commits-since: '2025-06-18T10:29:46Z' # date of first commit on new branch
 ```
 
-## First release from new branch
-
-When we create new branch for old version, release drafter will, can not find the previous release.
-
-We need a change a `target_commitish` for the latest release.
-
-Example for `maven-clean-plugin`
-
-Release `3.4.0` was done form master branch, next we create new branch for 3.x - `maven-clean-plugin-3.x`
-
-Release `3.4.0` has old `target_commitish`
-
-```
-gh api /repos/apache/maven-clean-plugin/releases/tags/maven-clean-plugin-3.4.0
-
-...
-"id": 161340667, <-- needed for update
-"tag_name": "maven-clean-plugin-3.4.0",
-"target_commitish": "master", <-- shold be new branch
-...
-```
-
-We need update it, by:
-
-```
-gh api --method PATCH /repos/apache/maven-clean-plugin/releases/161340667 -f "target_commitish=refs/heads/maven-clean-plugin-3.x"
-```
 
 ## pre-release, beta versions
 
@@ -299,7 +279,7 @@ _extends: maven-gh-actions-shared:.github/release-drafter.yml
 
 Next in each branch we need provide new configuration name in action:
 
-```
+```yml
   update_release_draft:
     uses: apache/maven-gh-actions-shared/.github/workflows/release-drafter.yml@v4
     with:
