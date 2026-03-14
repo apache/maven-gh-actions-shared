@@ -39,7 +39,7 @@ jobs:
       ff-jdk: '21'
       verify-goal: clean install
       verify-fail-fast: false
-      maven-matrix: '[ "3.9.12" ]'
+      maven-matrix: '[ "3.9.14" ]'
 
   # test with Maven 4
   verify-3:
