@@ -40,6 +40,8 @@ jobs:
       verify-goal: clean install
       verify-fail-fast: false
       maven-matrix: '[ "3.9.14" ]'
+      ff-jdk-toolchain: ''
+      jdk-toolchain: ''
 
   # test with Maven 4
   verify-3:
