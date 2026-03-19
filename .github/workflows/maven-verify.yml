@@ -32,6 +32,17 @@ on:
         default: '[ "ubuntu-latest", "windows-latest", "macos-latest" ]'
         type: string
 
+      jdk-toolchain:
+        description: 'The jdk versions to be present in the maven toolchain (default: all current LTS versions)'
+        required: false
+        default: |
+            8
+            11
+            17
+            21
+            25
+        type: string
+
       jdk-matrix:
         description: jdk matrix as json array
         required: false
@@ -117,6 +128,17 @@ on:
         default: '3.9.14'
         type: string
 
+      ff-jdk-toolchain:
+        description: 'The jdk versions to be present in the maven toolchain during fail-fast-build job (default: all current LTS versions)'
+        required: false
+        default: |
+          8
+          11
+          17
+          21
+          25
+        type: string
+
       ff-jdk:
         description: The jdk version used during fail-fast-build job
         required: false
@@ -193,7 +215,7 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-# clare all permissions for GITHUB_TOKEN
+# clear all permissions for GITHUB_TOKEN
 permissions: {}
 
 jobs:
@@ -273,6 +295,13 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
+
+      - name: Set up JDKs for Toolchain
+        uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5.2.0
+        with:
+          java-version: ${{ inputs.ff-jdk-toolchain }}
+          distribution: ${{ inputs.ff-jdk-distribution }}
+          cache: 'maven'
 
       - name: Set up JDK
         uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5.2.0
@@ -390,6 +419,14 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
+
+      - name: Set up JDKs for Toolchain
+        if: steps.should-run.conclusion == 'success'
+        uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5.2.0
+        with:
+          java-version: ${{ inputs.jdk-toolchain }}
+          distribution: ${{ matrix.distribution }}
+          cache: 'maven'
 
       - name: Set up JDK
         if: steps.should-run.conclusion == 'success'
