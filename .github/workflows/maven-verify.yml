@@ -36,7 +36,6 @@ on:
         description: 'The jdk versions to be present in the maven toolchain (default: all current LTS versions)'
         required: false
         default: |
-            8
             11
             17
             21
@@ -132,7 +131,6 @@ on:
         description: 'The jdk versions to be present in the maven toolchain during fail-fast-build job (default: all current LTS versions)'
         required: false
         default: |
-          8
           11
           17
           21
