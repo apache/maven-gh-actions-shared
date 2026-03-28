@@ -18,7 +18,6 @@
 # Configuration for Release Drafter: https://github.com/toolmantim/release-drafter
 name-template: $RESOLVED_VERSION
 tag-template: v$RESOLVED_VERSION
-version-template: $COMPLETE
 
 filter-by-commitish: true
 
