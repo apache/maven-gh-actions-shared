@@ -30,10 +30,12 @@ categories:
       - breaking
 
   - title: 🚨 Removed
-    label: removed
+    labels:
+      - removed
 
   - title: ⚠️ Deprecated
-    label: deprecated
+    labels:
+      - deprecated
 
   - title: ":tada: Major features and improvements"
     labels:
@@ -62,7 +64,8 @@ categories:
       - developer 
 
   - title: 📝 Documentation updates
-    label: documentation
+    labels:
+      - documentation
 
   - title: 👻 Maintenance
     labels: 
@@ -71,7 +74,8 @@ categories:
       - maintenance
 
   - title: 🔧 Build
-    label: build      
+    labels:
+      - build      
 
   - title: 🚦 Tests
     labels: 
@@ -80,7 +84,8 @@ categories:
 
   # Default label used by Dependabot
   - title: 📦 Dependency updates
-    label: dependencies
+    labels:
+      - dependencies
 
 exclude-labels:
   - reverted
