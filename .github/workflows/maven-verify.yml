@@ -320,7 +320,7 @@ jobs:
         if: inputs.ff-site-run
 
       - name: Upload Maven Site
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: inputs.ff-site-run
         with:
           name: ${{ github.run_number }}-site-${{ inputs.ff-os }}-${{ inputs.ff-jdk }}-${{ inputs.ff-jdk-distribution }}-${{ needs.setup-maven-version.outputs.version }}
@@ -328,7 +328,7 @@ jobs:
             target/staging/**
 
       - name: Upload artifact on failure
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: failure() && inputs.failure-upload-path != ''
         with:
           name: ${{ github.run_number }}-failure-${{ inputs.ff-os }}-${{ inputs.ff-jdk }}-${{ inputs.ff-jdk-distribution }}-${{ needs.setup-maven-version.outputs.version }}
@@ -442,7 +442,7 @@ jobs:
         run: ./mvnw --errors --batch-mode --show-version ${{ inputs.maven-args }} ${{ inputs.verify-goal }}
 
       - name: Upload artifact on failure
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: steps.should-run.conclusion == 'success' && failure() && inputs.failure-upload-path != ''
         with:
           name: ${{ github.run_number }}-failure-${{ matrix.os }}-${{ matrix.jdk }}-${{ matrix.distribution }}-${{ matrix.maven }}
