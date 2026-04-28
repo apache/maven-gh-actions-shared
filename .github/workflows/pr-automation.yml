@@ -18,12 +18,6 @@
 name: PR Automation
 on:
   workflow_call:
-    inputs:
-      default-label:
-        description: The default label to add to PR
-        required: false
-        default: 'maintenance'
-        type: string
 
 # allow single build per branch or PR
 concurrency:
