@@ -164,7 +164,7 @@ on:
       ff-site-goal:
         description: The Maven goal used by fail-fast-build job to build site
         required: false
-        default: '-DskipTests -P reporting site site:stage'
+        default: '-DskipTests -P reporting compile site site:stage'
         type: string
 
       ff-timeout-minutes:
