@@ -39,13 +39,13 @@ on:
             11
             17
             21
-            25
+            26
         type: string
 
       jdk-matrix:
         description: jdk matrix as json array
         required: false
-        default: '[ "21", "25", "8" ]'
+        default: '[ "21", "26", "8" ]'
         type: string
 
       jdk-distribution-matrix:
@@ -134,7 +134,7 @@ on:
           11
           17
           21
-          25
+          26
         type: string
 
       ff-jdk:
