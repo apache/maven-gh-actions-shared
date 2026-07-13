@@ -406,7 +406,10 @@ jobs:
           $env:PATH = "C:\Windows\system32;C:\Windows;C:\Windows\System32\Wbem;C:\Windows\System32\WindowsPowerShell\v1.0\;C:\ProgramData\chocolatey\bin"
           [Environment]::SetEnvironmentVariable("Path", $env:PATH, "Machine")
           choco install --yes gpg4win
-          echo "C:\Program Files (x86)\Gpg4win\..\GnuPG\bin" >> $env:GITHUB_PATH
+          # Gpg4win 4.x (32-bit) deploys GnuPG under "Program Files (x86)", 5.x+ (64-bit) under "Program Files"
+          "C:\Program Files\GnuPG\bin", "C:\Program Files (x86)\GnuPG\bin" |
+            Where-Object { Test-Path $_ } |
+            Add-Content $env:GITHUB_PATH
 
       - name: Check GnuPG
         if: >
