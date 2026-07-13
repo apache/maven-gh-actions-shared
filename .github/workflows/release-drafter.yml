@@ -28,12 +28,6 @@ on:
         required: false
         type: string
         default: 'release-drafter.yml'
-      initial-commits-since:
-        description: |
-          A date in ISO format (eg: '2025-06-18T10:29:51Z') marking the initial commit for the release draft. This is applied only when no prior release is available.
-        required: false
-        type: string
-
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -95,9 +89,6 @@ jobs:
           config-name: ${{ inputs.config-name }}
           version: ${{ needs.detect-version.outputs.version }}
           commitish: ${{ github.ref }}
-          initial-commits-since: ${{ inputs.initial-commits-since }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Verify release drafter status
         if: steps.release-drafter.outputs.id == ''
