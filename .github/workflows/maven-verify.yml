@@ -289,7 +289,7 @@ jobs:
     steps:
       - name: Install Subversion
         if: inputs.install-subversion
-        uses: apache/maven-gh-actions-shared/.github/actions/install-svn@v4
+        uses: apache/maven-gh-actions-shared/.github/actions/install-svn@v5
 
       - name: Show free disk space
         run: df -h
@@ -395,7 +395,7 @@ jobs:
 
       - name: Install Subversion
         if: inputs.install-subversion && steps.should-run.conclusion == 'success'
-        uses: apache/maven-gh-actions-shared/.github/actions/install-svn@v4
+        uses: apache/maven-gh-actions-shared/.github/actions/install-svn@v5
 
       - name: Install GnuPG
         if: >
