@@ -214,6 +214,12 @@ on:
         default: false
         type: boolean
 
+      show-download-progress:
+        description: Whether Maven should print artifact download/transfer progress to the build log.
+        required: false
+        default: false
+        type: boolean
+
 # allow single build per branch or PR
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -307,6 +313,7 @@ jobs:
         with:
           java-version: ${{ inputs.ff-jdk-toolchain }}
           distribution: ${{ inputs.ff-jdk-distribution }}
+          show-download-progress: ${{ inputs.show-download-progress }}
 
       - name: Set up JDK
         uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5.7.0
@@ -314,6 +321,7 @@ jobs:
           java-version: ${{ inputs.ff-jdk }}
           distribution: ${{ inputs.ff-jdk-distribution }}
           cache: 'maven'
+          show-download-progress: ${{ inputs.show-download-progress }}
 
       - name: Set up Maven
         run:
@@ -435,6 +443,7 @@ jobs:
         with:
           java-version: ${{ inputs.jdk-toolchain }}
           distribution: ${{ matrix.distribution }}
+          show-download-progress: ${{ inputs.show-download-progress }}
 
       - name: Set up JDK
         if: steps.should-run.conclusion == 'success'
@@ -443,6 +452,7 @@ jobs:
           java-version: ${{ matrix.jdk }}
           distribution: ${{ matrix.distribution }}
           cache: 'maven'
+          show-download-progress: ${{ inputs.show-download-progress }}
 
       - name: Set up Maven
         if: steps.should-run.conclusion == 'success'
