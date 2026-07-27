@@ -16,11 +16,11 @@
 -->
 # Apache Maven Shared GitHub Actions
 
-current branch is [v4](https://github.com/apache/maven-gh-actions-shared/tree/v4)
+current branch is [v5](https://github.com/apache/maven-gh-actions-shared/tree/v5)
 
 # Usage
 
-Create GitHub workflow in project workspace referencing [shared `maven-verify.yml@v4`](https://github.com/apache/maven-gh-actions-shared/blob/v4/.github/workflows/maven-verify.yml):
+Create GitHub workflow in project workspace referencing [shared `maven-verify.yml@v5`](https://github.com/apache/maven-gh-actions-shared/blob/v5/.github/workflows/maven-verify.yml):
 
 ```
 .github/workflows/maven-verify.yml
@@ -55,7 +55,7 @@ on:
 jobs:
   build:
     name: Verify
-    uses: apache/maven-gh-actions-shared/.github/workflows/maven-verify.yml@v4
+    uses: apache/maven-gh-actions-shared/.github/workflows/maven-verify.yml@v5
 
 ```
 
@@ -87,7 +87,7 @@ We can store some logs of execution in case of failure as workflow attachments:
 
 ```yaml
 ...
-    uses: apache/maven-gh-actions-shared/.github/workflows/maven-verify.yml@v4
+    uses: apache/maven-gh-actions-shared/.github/workflows/maven-verify.yml@v5
     with:
       failure-upload-path: |
         **/target/surefire-reports/*
@@ -97,7 +97,7 @@ We can store some logs of execution in case of failure as workflow attachments:
 
 ```yaml
 ...
-    uses: apache/maven-gh-actions-shared/.github/workflows/maven-verify.yml@v4
+    uses: apache/maven-gh-actions-shared/.github/workflows/maven-verify.yml@v5
     with:
       matrix-exclude: >
         [ 
@@ -111,7 +111,7 @@ We can store some logs of execution in case of failure as workflow attachments:
 
 ```yaml
 ...
-    uses: apache/maven-gh-actions-shared/.github/workflows/maven-verify.yml@v4
+    uses: apache/maven-gh-actions-shared/.github/workflows/maven-verify.yml@v5
     with:
       ff-goal: 'install'
       verify-goal: 'install -P run-its'
@@ -121,7 +121,7 @@ We can store some logs of execution in case of failure as workflow attachments:
 
 ```yaml
 ...
-    uses: apache/maven-gh-actions-shared/.github/workflows/maven-verify.yml@v4
+    uses: apache/maven-gh-actions-shared/.github/workflows/maven-verify.yml@v5
     with:
       ff-maven: "3.8.6"                     # Maven version for fail-fast-build
       maven-matrix: '[ "3.2.5", "3.8.6" ]'  # Maven versions matrix for verify builds
@@ -131,7 +131,7 @@ We can store some logs of execution in case of failure as workflow attachments:
 
 ```yaml
 ...
-    uses: apache/maven-gh-actions-shared/.github/workflows/maven-verify.yml@v4
+    uses: apache/maven-gh-actions-shared/.github/workflows/maven-verify.yml@v5
     with:
       maven4-enabled: true
       maven4-version: 'xxx'    # only needed if you want to override default
@@ -142,7 +142,7 @@ We can store some logs of execution in case of failure as workflow attachments:
 
 ```yaml
 ...
-    uses: apache/maven-gh-actions-shared/.github/workflows/maven-verify.yml@v4
+    uses: apache/maven-gh-actions-shared/.github/workflows/maven-verify.yml@v5
     with:
       maven4-build: true
 ```
@@ -151,7 +151,7 @@ We can store some logs of execution in case of failure as workflow attachments:
 
 ```yaml
 ...
-    uses: apache/maven-gh-actions-shared/.github/workflows/maven-verify.yml@v4
+    uses: apache/maven-gh-actions-shared/.github/workflows/maven-verify.yml@v5
     with:
       matrix-enabled: false
 ```
@@ -160,14 +160,14 @@ We can store some logs of execution in case of failure as workflow attachments:
 
 More options with default values can be found in workflow source in `inputs` section:
 
-https://github.com/apache/maven-gh-actions-shared/blob/v4/.github/workflows/maven-verify.yml
+https://github.com/apache/maven-gh-actions-shared/blob/v5/.github/workflows/maven-verify.yml
 
 
 # Release drafter configuration
 
 ## Only default branch
 
-We need to add an action referencing [shared `release-drafter.yml@v4`](https://github.com/apache/maven-gh-actions-shared/blob/v4/.github/workflows/release-drafter.yml):
+We need to add an action referencing [shared `release-drafter.yml@v5`](https://github.com/apache/maven-gh-actions-shared/blob/v5/.github/workflows/release-drafter.yml):
 
 ```
 .github/workflows/release-drafter.yml
@@ -202,7 +202,7 @@ on:
 
 jobs:
   update_release_draft:
-    uses: apache/maven-gh-actions-shared/.github/workflows/release-drafter.yml@v4
+    uses: apache/maven-gh-actions-shared/.github/workflows/release-drafter.yml@v5
 ```
 
 and configuration:
@@ -232,14 +232,12 @@ with content:
 # under the License.
 
 _extends: maven-gh-actions-shared
-
 tag-template: <project-tag-prefix>-$RESOLVED_VERSION
 ```
 
 ## Multiple versions from multiple branches
 
-We need change a branch name in `.github/workflows/release-drafter.yml`, and add `initial-commits-since` 
-in each branch:
+We need to change a branch name in `.github/workflows/release-drafter.yml` in each branch:
 
 ```yml
 name: Release Drafter
@@ -251,9 +249,7 @@ on:
 
 jobs:
   update_release_draft:
-    uses: apache/maven-gh-actions-shared/.github/workflows/release-drafter.yml@v4
-    with:
-      initial-commits-since: '2025-06-18T10:29:46Z' # date of first commit on new branch
+    uses: apache/maven-gh-actions-shared/.github/workflows/release-drafter.yml@v5
 ```
 
 
@@ -268,23 +264,22 @@ prerelease: true
 
 ## Specific configuration per branch
 
-When we need to have different configuration for each branch we need create a new `release-drafter` configuration in **default branch** ❗❗❗️
+Each branch has its own configuration file in `.github/release-drafter.yml`.
 
-When configuration name is different then default, we need specified configuration name from shared repository:
+## First release from a new branch
 
-```yml
-_extends: maven-gh-actions-shared:.github/release-drafter.yml
-...
-```
-
-Next in each branch we need provide new configuration name in action:
+We need to add to `.github/release-drafter.yml` in branch:
 
 ```yml
-  update_release_draft:
-    uses: apache/maven-gh-actions-shared/.github/workflows/release-drafter.yml@v4
-    with:
-      config-name: '<config-name-per-branch>' 
+filter-by-commitish: false
 ```
+
+When a previous release is not correctly discovered, we can try to filter by version range:
+
+```yml
+filter-by-range: '>=3.0.0 <4.0.0'
+```
+
 
 # Pull Request Automation
 
@@ -323,7 +318,7 @@ on:
 jobs:
   pr-automation:
     name: PR Automation
-    uses: apache/maven-gh-actions-shared/.github/workflows/pr-automation.yml@v4
+    uses: apache/maven-gh-actions-shared/.github/workflows/pr-automation.yml@v5
 
 ```
 
@@ -360,7 +355,7 @@ Please create new [Personal access tokens (classic)](https://github.com/settings
 
 # Management of stale issues and PRs
 
-We need an action in project referencing [shared `stale.yml@v4`](https://github.com/apache/maven-gh-actions-shared/blob/v4/.github/workflows/stale.yml):
+We need an action in project referencing [shared `stale.yml@v5`](https://github.com/apache/maven-gh-actions-shared/blob/v5/.github/workflows/stale.yml):
 
 ```yml
 .github/workflows/stale.yml
@@ -396,7 +391,7 @@ on:
 
 jobs:
   stale:
-    uses: 'apache/maven-gh-actions-shared/.github/workflows/stale.yml@v4'
+    uses: 'apache/maven-gh-actions-shared/.github/workflows/stale.yml@v5'
 
 ```
 
