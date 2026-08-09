@@ -220,6 +220,14 @@ on:
         default: false
         type: boolean
 
+      windows-defender-exclusions:
+        description: >
+          Exclude the workspace, the local repository and the runner temp directory from
+          Microsoft Defender's real-time scanner. Windows runners only, ignored elsewhere.
+        required: false
+        default: true
+        type: boolean
+
 # allow single build per branch or PR
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -293,6 +301,27 @@ jobs:
     if: inputs.ff-run
 
     steps:
+      # A Maven build writes and re-reads tens of thousands of small files, and forks a JVM
+      # per module and per integration test that reads its whole classpath back off disk.
+      # Defender scans every one of those reads. The runners are ephemeral and only ever
+      # build the code they just checked out, so the scan buys nothing.
+      - name: Exclude the build directories from Microsoft Defender
+        if: inputs.windows-defender-exclusions && runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $paths = @($env:GITHUB_WORKSPACE, $env:RUNNER_TEMP, (Join-Path $env:USERPROFILE '.m2')) |
+            Where-Object { $_ }
+          try {
+              Add-MpPreference -ExclusionPath $paths -ErrorAction Stop
+              Add-MpPreference -ExclusionProcess @('java.exe', 'javaw.exe', 'javac.exe', 'jar.exe') -ErrorAction Stop
+              Write-Host "Defender exclusions added for: $($paths -join ', ')"
+          }
+          catch {
+              # A runner image without Defender, or without its management cmdlets, simply
+              # keeps scanning. Never fail a build over a tuning step.
+              Write-Host "::warning::Could not add Microsoft Defender exclusions: $($_.Exception.Message)"
+          }
+
       - name: Install Subversion
         if: inputs.install-subversion
         uses: apache/maven-gh-actions-shared/.github/actions/install-svn@v5
@@ -389,6 +418,25 @@ jobs:
           (inputs.maven4-build && matrix.maven != inputs.maven4-version) ||
           inputs.verify-goal != inputs.ff-goal
         run: echo ok
+
+      # See the matching step in fail-fast-build for why this is worth doing.
+      - name: Exclude the build directories from Microsoft Defender
+        if: >
+          inputs.windows-defender-exclusions &&
+          steps.should-run.conclusion == 'success' &&
+          runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $paths = @($env:GITHUB_WORKSPACE, $env:RUNNER_TEMP, (Join-Path $env:USERPROFILE '.m2')) |
+            Where-Object { $_ }
+          try {
+              Add-MpPreference -ExclusionPath $paths -ErrorAction Stop
+              Add-MpPreference -ExclusionProcess @('java.exe', 'javaw.exe', 'javac.exe', 'jar.exe') -ErrorAction Stop
+              Write-Host "Defender exclusions added for: $($paths -join ', ')"
+          }
+          catch {
+              Write-Host "::warning::Could not add Microsoft Defender exclusions: $($_.Exception.Message)"
+          }
 
       # Some projects (like Maven SCM) need the command-line tools for all SCMs installed.
       # Git and Subversion are installed on all by default.
