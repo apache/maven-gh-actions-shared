@@ -359,7 +359,8 @@ jobs:
 
   verify:
     if: >
-      (!cancelled()) && inputs.matrix-enabled && ( !inputs.ff-run || needs.fail-fast-build.result == 'success' ) &&
+      (!cancelled()) && needs.setup-maven-version.result == 'success' &&
+      inputs.matrix-enabled && ( !inputs.ff-run || needs.fail-fast-build.result == 'success' ) &&
       !startsWith(github.event.head_commit.message , '[maven-release-plugin] prepare release')
     needs: [setup-maven-version, fail-fast-build]
     name: ${{ matrix.os }} jdk-${{ matrix.jdk }}-${{ matrix.distribution }} ${{ matrix.maven }}
