@@ -64,37 +64,37 @@ module.exports = [
     {
         name: "maintenance",
         color: "912E29",
-        description: ""
+        description: "Internal upkeep: refactoring, cleanup, chores - no user-facing change"
     },
     {
         name: "build",
-        color: "912E29",
-        description: "Pull requests that change the build process"
+        color: "795548",
+        description: "Changes to the build process"
     },
     {
         name: "breaking",
-        color: "e4e669",
-        description: "Pull requests that break existing features"
+        color: "FF4F00",
+        description: "Backwards-incompatible change"
     },
     {
         name: "deprecated",
         color: "C70132",
-        description: "Pull requests that deprecate features"
+        description: "Deprecates existing functionality"
     },
     {
         name: "removed",
         color: "BC7855",
-        description: "Pull requests that remove features"
+        description: "Removes existing functionality"
     },
     {
         name: "skip-changelog",
-        color: "e4e669",
-        description: "Skip this PR from automatically changelog generation"
+        color: "2F6F6F",
+        description: "Excluded from the generated release notes"
     },
     {
         name: "priority:blocker",
         color: "cc0000",
-        description: "Blocks development and/or testing work, production could not run"
+        description: "Blocks development, testing, or release"
     },
     {
         name: "priority:critical",
@@ -109,7 +109,7 @@ module.exports = [
     {
         name: "priority:minor",
         color: "006600",
-        description: "Minor loss of function, or other problem where easy workaround is present"
+        description: "Minor loss of function; an easy workaround exists"
     },
     {
         name: "priority:trivial",
@@ -118,12 +118,42 @@ module.exports = [
     },
     {
         name: "waiting-for-feedback",
-        color: "ffffff",
-        description: "Waiting for 90 days until issues or pull request will be closed"
+        color: "BF8700",
+        description: "Awaiting reporter response; closed automatically after 90 days of silence"
     },
     {
         name: "wontfix",
-        color: "ffffff",
+        color: "6E7781",
         description: "This will not be worked on"
+    },
+    {
+        name: "github_actions",
+        color: "79B8FF",
+        description: "Pull requests that update GitHub Actions code"
+    },
+    {
+        name: "question",
+        color: "d876e3",
+        description: "Further information is requested"
+    },
+    {
+        name: "Stale",
+        color: "ededed",
+        description: "Inactive; will be closed soon unless there is new activity"
+    },
+    {
+        name: "hacktoberfest-accepted",
+        color: "51F693",
+        description: "Opts this pull request into Hacktoberfest"
+    },
+    {
+        name: "security",
+        color: "7B1FA2",
+        description: "Security issue or fix. Report undisclosed vulnerabilities to security@apache.org, not here."
+    },
+    {
+        name: "reverted",
+        color: "24292F",
+        description: "Change was reverted; excluded from the release notes"
     }
 ]
