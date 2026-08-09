@@ -36,31 +36,14 @@ categories:
     labels:
       - deprecated
 
-  - title: ":tada: Major features and improvements"
-    labels:
-      - major-enhancement
-      - major-rfe
-
-  - title: 🐛 Major bug fixes
-    labels:
-      - major-bug
-
   - title: 🚀 New features and improvements
     labels:
       - enhancement
       - feature
-      - rfe
 
   - title: 🐛 Bug Fixes
     labels:
       - bug
-      - fix
-      - bugfix
-      - regression
-
-  - title: ":construction_worker: Changes for developers"
-    labels:
-      - developer 
 
   - title: 📝 Documentation updates
     labels:
@@ -68,9 +51,8 @@ categories:
 
   - title: 👻 Maintenance
     labels: 
-      - chore
-      - internal
       - maintenance
+      - chore
 
   - title: 🔧 Build
     labels:
@@ -78,13 +60,34 @@ categories:
 
   - title: 🚦 Tests
     labels: 
-      - test
       - tests
 
   # Default label used by Dependabot
   - title: 📦 Dependency updates
     labels:
       - dependencies
+    collapse-after: 10
+
+version-resolver:
+  major:
+    labels:
+      - breaking
+  minor:
+    labels:
+      - enhancement
+      - feature
+      - removed
+      - deprecated
+  patch:
+    labels:
+      - bug
+      - documentation
+      - maintenance
+      - chore
+      - build
+      - tests
+      - dependencies
+  default: patch
 
 exclude-labels:
   - reverted
