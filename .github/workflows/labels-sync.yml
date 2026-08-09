@@ -21,12 +21,22 @@ permissions:
   contents: read
 
 on:
+  # Monthly, report-only: reading labels from a public repository needs no
+  # permissions, so this runs on the default GITHUB_TOKEN, changes nothing, and
+  # fails if anything has drifted from labels.js.
+  schedule:
+    - cron: '0 6 1 * *'
   workflow_dispatch:
     inputs:
       token:
         type: string
-        description: 'A GitHub token used to perform action - access token (classic) with repo scope'
-        required: true
+        description: 'Access token (classic) with repo scope. Leave empty to only report drift without changing anything.'
+        required: false
+      create-missing:
+        type: boolean
+        description: 'Also create labels that a repository does not have yet. Off by default: a plain run only corrects the colour and description of labels that already exist.'
+        required: false
+        default: false
 
 jobs:
   repos:
@@ -69,10 +79,15 @@ jobs:
         env:
           OWNER: 'apache'
           REPO: ${{ matrix.repo }}
+          CREATE_MISSING: ${{ inputs.create-missing }}
+          APPLY: ${{ inputs.token != '' }}
         with:
-          github-token: ${{ inputs.token }}
+          github-token: ${{ inputs.token || github.token }}
           script: |
             const labels = require('./.github/labels.js');
+            const createMissing = process.env.CREATE_MISSING === 'true';
+            const apply = process.env.APPLY === 'true';
+            const drift = [];
 
             console.log('Labels to update:');
             console.log(labels);
@@ -95,24 +110,37 @@ jobs:
               console.log(currentLabel);
             
               if (!currentLabel) {
-  
-                console.log('Add label: ' + label.name);
-                github.rest.issues.createLabel({
-                  owner: process.env.OWNER,
-                  repo: process.env.REPO,
-                  ...label
-                });
-  
+
+                drift.push('missing: ' + label.name);
+                if (apply && createMissing) {
+                  console.log('Add label: ' + label.name);
+                  await github.rest.issues.createLabel({
+                    owner: process.env.OWNER,
+                    repo: process.env.REPO,
+                    ...label
+                  });
+                } else {
+                  console.log('Label: ' + label.name + ' is absent - not creating it, re-run with create-missing to add it');
+                }
+
               } else if (label.color != currentLabel.color || label.description != currentLabel.description) {
                 
-                console.log('Update label: ' + label.name);
-                github.rest.issues.updateLabel({
-                  owner: process.env.OWNER,
-                  repo: process.env.REPO,
-                  ...label
-                });
+                drift.push('differs: ' + label.name);
+                if (apply) {
+                  console.log('Update label: ' + label.name);
+                  await github.rest.issues.updateLabel({
+                    owner: process.env.OWNER,
+                    repo: process.env.REPO,
+                    ...label
+                  });
+                }
             
               } else {
                 console.log('Label: ' + label.name + ' is up to date');
               }
+            }
+
+            if (drift.length && !apply) {
+              core.summary.addHeading(process.env.REPO, 3).addList(drift).write();
+              core.setFailed(process.env.REPO + ': ' + drift.length + ' label(s) drifted from labels.js');
             }
