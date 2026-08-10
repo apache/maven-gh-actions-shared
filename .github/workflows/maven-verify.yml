@@ -220,6 +220,21 @@ on:
         default: false
         type: boolean
 
+      ff-baseline-run:
+        description: Determines should fail-fast-build verify the Maven baseline
+        required: false
+        default: true
+        type: boolean
+
+      ff-baseline-maven:
+        description: >
+          The oldest Maven version the project supports, as declared in <prerequisites><maven>.
+          Defaults to 3.6.3, or to maven4-version when maven4-build is set. Override only when
+          a project's floor differs.
+        required: false
+        default: ''
+        type: string
+
 # allow single build per branch or PR
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -291,6 +306,15 @@ jobs:
     timeout-minutes: ${{ inputs.ff-timeout-minutes }}
     needs: setup-maven-version
     if: inputs.ff-run
+    env:
+      # The Maven baseline is managed here, not per project: 3.6.3 for the 3.x line, 4.0.0-rc-6
+      # for a Maven 4 only build. ff-baseline-maven overrides it where a project differs.
+      #
+      # These are floors, deliberately not tied to maven-matrix or maven4-version. Those say what
+      # the build runs on and move with every release; the floor is what we promise to support and
+      # moves only when we decide to drop a version - the 3.x line builds on 3.9.x and is checked
+      # against 3.6.3.
+      BASELINE_MAVEN: ${{ inputs.ff-baseline-maven != '' && inputs.ff-baseline-maven || (inputs.maven4-build && '4.0.0-rc-6' || '3.6.3') }}
 
     steps:
       - name: Install Subversion
@@ -341,6 +365,19 @@ jobs:
           name: ${{ github.run_number }}-site-${{ inputs.ff-os }}-${{ inputs.ff-jdk }}-${{ inputs.ff-jdk-distribution }}-${{ needs.setup-maven-version.outputs.version }}
           path: |
             target/staging/**
+
+      # The build above runs current Maven, so nothing so far exercises the version the project
+      # declares in <prerequisites>. Compiling both source roots against that API level catches
+      # drift for a fraction of the cost of a second test run.
+      #
+      # clean is not optional: target/ is warm from the build and site steps, and without it the
+      # compiler reports "Nothing to compile - all classes are up to date" and this passes green
+      # having compiled nothing. It is therefore not exposed as an input.
+      #
+      # Placed after Upload Maven Site because that clean would discard target/staging.
+      - name: Verify compatibility with Maven ${{ env.BASELINE_MAVEN }}
+        if: inputs.ff-baseline-run
+        run: ./mvnw --errors --batch-mode --show-version ${{ inputs.maven-args }} "-DmavenVersion=${{ env.BASELINE_MAVEN }}" clean test-compile
 
       - name: Upload artifact on failure
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1

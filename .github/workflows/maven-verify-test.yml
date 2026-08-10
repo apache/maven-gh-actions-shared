@@ -78,3 +78,23 @@ jobs:
     with:
       maven4-build: true
       ff-site-run: false
+
+  # test opting out of the Maven baseline check
+  verify-7:
+    name: Verify 7 - Maven baseline disabled
+    uses: ./.github/workflows/maven-verify.yml
+    needs: verify-6
+    with:
+      ff-baseline-run: false
+      ff-site-run: false
+      matrix-enabled: false
+
+  # test overriding the Maven baseline
+  verify-8:
+    name: Verify 8 - Maven baseline overridden
+    uses: ./.github/workflows/maven-verify.yml
+    needs: verify-7
+    with:
+      ff-baseline-maven: '3.9.12'
+      ff-site-run: false
+      matrix-enabled: false
