@@ -103,9 +103,9 @@ on:
         type: number
 
       timeout-minutes:
-        description: timeout-minutes used by the builds (defaults to 360)
+        description: timeout-minutes used by the builds (defaults to 30)
         required: false
-        default: 360
+        default: 30
         type: number
 
       fetch-depth:
@@ -174,9 +174,9 @@ on:
         type: string
 
       ff-timeout-minutes:
-        description: timeout-minutes used by fail-fast-build jobs (defaults to 360)
+        description: timeout-minutes used by fail-fast-build jobs (defaults to 15)
         required: false
-        default: 360
+        default: 15
         type: number
 
       verify-goal:
@@ -232,6 +232,7 @@ jobs:
 
   setup-maven-version:
     runs-on: "ubuntu-latest"
+    timeout-minutes: 5
     # execute on any push or pull request from forked repo, skip release commit
     if: >
       (github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork)) &&
