@@ -23,6 +23,8 @@ on:
   workflow_call:
 
 permissions:
+  # actions: write lets actions/stale delete its _state cache at the end of a run
+  actions: write
   issues: write
   pull-requests: write
 
