@@ -286,8 +286,9 @@ jobs:
           cat "$GITHUB_OUTPUT"
 
   # verify build on one node - before matrix will start
+  # no explicit name: a skipped job never has its name evaluated, so an
+  # expression here reaches the checks list as raw ${{ ... }} text
   fail-fast-build:
-    name: ${{ inputs.ff-os }} jdk-${{ inputs.ff-jdk }}-${{ inputs.ff-jdk-distribution }} ${{ needs.setup-maven-version.outputs.version }}
     runs-on: ${{ inputs.ff-os }}
     timeout-minutes: ${{ inputs.ff-timeout-minutes }}
     needs: setup-maven-version
@@ -358,13 +359,13 @@ jobs:
       - name: Clean Ensuring no file handle remains open on windows
         run: ./mvnw clean --errors --batch-mode --show-version -Dmaven.clean.retryOnError ${{ inputs.maven-args }} 
 
+  # no explicit name, as above; GitHub appends the matrix values by itself
   verify:
     if: >
       (!cancelled()) && needs.setup-maven-version.result == 'success' &&
       inputs.matrix-enabled && ( !inputs.ff-run || needs.fail-fast-build.result == 'success' ) &&
       !startsWith(github.event.head_commit.message , '[maven-release-plugin] prepare release')
     needs: [setup-maven-version, fail-fast-build]
-    name: ${{ matrix.os }} jdk-${{ matrix.jdk }}-${{ matrix.distribution }} ${{ matrix.maven }}
     timeout-minutes: ${{ inputs.timeout-minutes }}
     runs-on: ${{ matrix.os }}
 
