@@ -25,72 +25,79 @@ filter-by-commitish: true
 categories:
 
   - title: ":boom: Breaking changes"
-    labels: 
-      - breaking
+    when:
+      label: breaking
 
   - title: 🚨 Removed
-    labels:
-      - removed
+    when:
+      label: removed
 
   - title: ⚠️ Deprecated
-    labels:
-      - deprecated
+    when:
+      label: deprecated
 
   - title: ":tada: Major features and improvements"
-    labels:
-      - major-enhancement
-      - major-rfe
+    when:
+      labels:
+        - major-enhancement
+        - major-rfe
 
   - title: 🐛 Major bug fixes
-    labels:
-      - major-bug
+    when:
+      label: major-bug
 
   - title: 🚀 New features and improvements
-    labels:
-      - enhancement
-      - feature
-      - rfe
+    when:
+      labels:
+        - enhancement
+        - feature
+        - rfe
 
   - title: 🐛 Bug Fixes
-    labels:
-      - bug
-      - fix
-      - bugfix
-      - regression
+    when:
+      labels:
+        - bug
+        - fix
+        - bugfix
+        - regression
 
   - title: ":construction_worker: Changes for developers"
-    labels:
-      - developer 
+    when:
+      label: developer
 
   - title: 📝 Documentation updates
-    labels:
-      - documentation
+    when:
+      label: documentation
 
   - title: 👻 Maintenance
-    labels: 
-      - chore
-      - internal
-      - maintenance
+    when:
+      labels:
+        - chore
+        - internal
+        - maintenance
 
   - title: 🔧 Build
-    labels:
-      - build      
+    when:
+      label: build
 
   - title: 🚦 Tests
-    labels: 
-      - test
-      - tests
+    when:
+      labels:
+        - test
+        - tests
 
   # Default label used by Dependabot
   - title: 📦 Dependency updates
-    labels:
-      - dependencies
+    when:
+      label: dependencies
 
-exclude-labels:
-  - reverted
-  - no-changelog
-  - skip-changelog
-  - invalid
+  - type: pre-exclude
+    when:
+      labels:
+        - reverted
+        - no-changelog
+        - skip-changelog
+        - invalid
 
 change-template: '- $TITLE ([#$NUMBER]($URL)) @$AUTHOR'
 
