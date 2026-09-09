@@ -39,7 +39,7 @@ permissions: {}
 jobs:
   detect-version:
     name: Detect version
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     outputs:
       version: ${{ steps.version.outputs.version }}
 
@@ -76,7 +76,7 @@ jobs:
     permissions:
       # write permission is required to create a github release
       contents: write
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     # skip release drafter on next development commits
     if: >
       needs.detect-version.outputs.version != '' &&
