@@ -31,7 +31,7 @@ jobs:
   # dump GitHub context only when the workflow is re runed,
   # can help investigate problems
   dump-github-context:
-    runs-on: ubuntu-slim
+    runs-on: ubuntu-latest
     if: github.run_attempt > 1
 
     steps:
@@ -51,7 +51,7 @@ jobs:
       github.event.pull_request.merged  &&
       !github.event.pull_request.milestone &&
       !contains(github.event.pull_request.labels.*.name, 'skip-changelog')
-    runs-on: ubuntu-slim
+    runs-on: ubuntu-latest
     steps:
       - name: Update milestone
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
@@ -113,7 +113,7 @@ jobs:
       github.event.action == 'closed' &&
       (!github.event.pull_request.merged || contains(github.event.pull_request.labels.*.name, 'skip-changelog')) &&
       github.event.pull_request.milestone
-    runs-on: ubuntu-slim
+    runs-on: ubuntu-latest
     steps:
       - name: Remove milestone
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
@@ -138,7 +138,7 @@ jobs:
       github.event.action == 'closed' &&
       github.event.pull_request.merged &&
       toJSON(github.event.pull_request.labels) == '[]'
-    runs-on: ubuntu-slim
+    runs-on: ubuntu-latest
     steps:
       - name: Comment PR
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
@@ -176,7 +176,7 @@ jobs:
       github.event.action == 'closed' &&
       github.event.pull_request.merged &&
       toJSON(github.event.pull_request.assignees) == '[]'
-    runs-on: ubuntu-slim
+    runs-on: ubuntu-latest
     steps:
 
       - name: Assign PR
