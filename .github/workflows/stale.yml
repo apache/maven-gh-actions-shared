@@ -36,7 +36,7 @@ jobs:
   stale-waiting-for-feedback:
     if: github.event_name == 'schedule'
     name: 'Manage issues, PRs with waiting-for-feedback label'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
 
     steps:
       - uses: actions/stale@4391f3da665fdf50b6810c1a66712fb9ba21aa93 # v11.0.0
@@ -57,7 +57,7 @@ jobs:
       github.event_name == 'issue_comment' && github.event.action == 'created' &&
       (contains(github.event.issue.labels.*.name, 'waiting-for-feedback') || contains(github.event.issue.labels.*.name, 'Stale'))
     name: 'Remove waiting-for-feedback label'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
 
     steps:
       - uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0

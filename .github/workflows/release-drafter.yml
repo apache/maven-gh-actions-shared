@@ -76,7 +76,7 @@ jobs:
     permissions:
       # write permission is required to create a github release
       contents: write
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     # skip release drafter on next development commits
     if: >
       needs.detect-version.outputs.version != '' &&
@@ -100,7 +100,7 @@ jobs:
     permissions:
       # write permission is required to manage milestones
       issues: write
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     # execute only on next development commits
     if: >
       needs.detect-version.outputs.version != '' &&
