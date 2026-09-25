@@ -63,7 +63,7 @@ on:
       maven4-version:
         description: The Maven 4.x version matrix
         required: false
-        default: '4.0.0-rc-6'
+        default: '4.0.0-rc-7'
         type: string
 
       maven4-enabled:
