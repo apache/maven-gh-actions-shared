@@ -1,0 +1,154 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+
+# Reusable workflow grouping the checks run against a pull request.
+name: PR check
+
+on:
+  workflow_call:
+
+# clear all permissions for GITHUB_TOKEN
+permissions: {}
+
+jobs:
+  # The PR description must contain at least one CHECKED Apache license declaration
+  # ("- [x] I hereby declare ...").
+  # - Missing       -> adds ONE comment and fails.
+  # - Fixed         -> hides the comment as outdated and passes.
+  # - Removed again -> unhides the same comment (no duplicates).
+  license-declaration:
+    permissions:
+      pull-requests: write
+      issues: write # PR comments are "issue comments" in the API
+    runs-on: ubuntu-slim
+    # Skip (a skipped job counts as successful, so a required check doesn't block the merge):
+    # - PRs opened by bots (Dependabot, Renovate, other GitHub Apps),
+    # - PRs opened by members of the organization owning the repository (apache).
+    if: >-
+      github.event.pull_request.user.type != 'Bot' &&
+      !contains(fromJSON('["OWNER", "MEMBER"]'), github.event.pull_request.author_association)
+    # Prevents races (e.g. opened + edited in quick succession => two comments).
+    # Do NOT define the same concurrency group in the caller – it would deadlock.
+    concurrency:
+      group: license-declaration-check-${{ github.repository }}-${{ github.event.pull_request.number }}
+      cancel-in-progress: false
+    steps:
+      - name: Check license declaration
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        with:
+          script: |
+            const MARKER = '<!-- license-declaration-check -->';
+
+            // At least one of these lines must be present with a checked box
+            const DECLARATIONS = [
+              'I hereby declare this contribution to be licensed under the [Apache License Version 2.0, January 2004](https://www.apache.org/licenses/LICENSE-2.0)',
+              'I hereby declare that I have filed an [Apache Individual Contributor License Agreement](https://www.apache.org/licenses/icla.pdf).',
+            ];
+
+            const { owner, repo } = context.repo;
+
+            // The workflow only makes sense for pull request events
+            const prNumber = context.payload.pull_request?.number;
+            if (!prNumber) {
+              core.setFailed(`This workflow must be called from pull_request or pull_request_target events (got "${context.eventName}").`);
+              return;
+            }
+
+            // "- [x] <declaration>" or "* [X] <declaration>", one per line, optional indentation/trailing spaces.
+            // Links may use either http:// or https://.
+            const escape = s => s
+              .replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+              .replace(/https?:\/\//g, 'https?://');
+            const regex = new RegExp(
+              `^[ \\t]*[-*][ \\t]+\\[[xX]\\][ \\t]+(?:${DECLARATIONS.map(escape).join('|')})[ \\t]*\\r?$`,
+              'm'
+            );
+
+            // Fetch the current description from the API (the event payload may be stale on "Re-run jobs")
+            const { data: pr } = await github.rest.pulls.get({ owner, repo, pull_number: prNumber });
+            const hasDeclaration = regex.test(pr.body || '');
+
+            // Find our comment: author must be a bot and the comment must contain the marker
+            const comments = await github.paginate(github.rest.issues.listComments, {
+              owner, repo, issue_number: prNumber, per_page: 100,
+            });
+            const existing = comments.find(
+              c => c.user?.type === 'Bot' && c.body?.includes(MARKER)
+            );
+
+            // Check whether the comment is already hidden
+            let isMinimized = false;
+            if (existing) {
+              const res = await github.graphql(
+                `query($id: ID!) {
+                   node(id: $id) { ... on IssueComment { isMinimized } }
+                 }`,
+                { id: existing.node_id }
+              );
+              isMinimized = res.node?.isMinimized ?? false;
+            }
+
+            // ---------- Declaration OK ----------
+            if (hasDeclaration) {
+              if (existing && !isMinimized) {
+                await github.graphql(
+                  `mutation($id: ID!) {
+                     minimizeComment(input: { subjectId: $id, classifier: OUTDATED }) {
+                       minimizedComment { isMinimized }
+                     }
+                   }`,
+                  { id: existing.node_id }
+                );
+                core.info('Comment marked as outdated (hidden).');
+              }
+              core.info('✅ PR description contains a checked license declaration.');
+              return;
+            }
+
+            // ---------- Declaration missing ----------
+            if (!existing) {
+              // The comment is added only once
+              await github.rest.issues.createComment({
+                owner, repo, issue_number: prNumber,
+                body: [
+                  MARKER,
+                  '### ⚠️ License declaration missing',
+                  '',
+                  'The pull request description must contain at least one of the following lines with a **checked** box (`[x]`):',
+                  '',
+                  '```markdown',
+                  ...DECLARATIONS.map(d => `- [ ] ${d}`),
+                  '```',
+                  '',
+                  'This comment will be hidden automatically once the description is fixed.',
+                ].join('\n'),
+              });
+              core.info('Comment added.');
+            } else if (isMinimized) {
+              // The declaration was removed again – unhide the existing comment instead of adding a new one
+              await github.graphql(
+                `mutation($id: ID!) {
+                   unminimizeComment(input: { subjectId: $id }) {
+                     unminimizedComment { isMinimized }
+                   }
+                 }`,
+                { id: existing.node_id }
+              );
+              core.info('Existing comment restored (unhidden).');
+            }
+
+            core.setFailed('❌ PR description does not contain a checked license declaration.');
