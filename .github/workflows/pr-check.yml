@@ -82,38 +82,50 @@ jobs:
             const { data: pr } = await github.rest.pulls.get({ owner, repo, pull_number: prNumber });
             const hasDeclaration = regex.test(pr.body || '');
 
-            // Find our comment: author must be a bot and the comment must contain the marker
-            const comments = await github.paginate(github.rest.issues.listComments, {
+            // Find our comment: author must be a bot and the comment must contain the marker.
+            // Iterate page by page and stop as soon as it is found - it is usually one of the first comments.
+            let existing;
+            for await (const { data: page } of github.paginate.iterator(github.rest.issues.listComments, {
               owner, repo, issue_number: prNumber, per_page: 100,
-            });
-            const existing = comments.find(
-              c => c.user?.type === 'Bot' && c.body?.includes(MARKER)
-            );
+            })) {
+              existing = page.find(c => c.user?.type === 'Bot' && c.body?.includes(MARKER));
+              if (existing) break;
+            }
 
             // Check whether the comment is already hidden
             let isMinimized = false;
             if (existing) {
-              const res = await github.graphql(
-                `query($id: ID!) {
-                   node(id: $id) { ... on IssueComment { isMinimized } }
-                 }`,
-                { id: existing.node_id }
-              );
-              isMinimized = res.node?.isMinimized ?? false;
+              try {
+                const res = await github.graphql(
+                  `query($id: ID!) {
+                     node(id: $id) { ... on IssueComment { isMinimized } }
+                   }`,
+                  { id: existing.node_id }
+                );
+                isMinimized = res.node?.isMinimized ?? false;
+              } catch (err) {
+                // The comment may have been deleted in the meantime - continue without hiding/unhiding it
+                core.warning(`Cannot read the state of the existing comment: ${err.message}`);
+              }
             }
 
             // ---------- Declaration OK ----------
             if (hasDeclaration) {
               if (existing && !isMinimized) {
-                await github.graphql(
-                  `mutation($id: ID!) {
-                     minimizeComment(input: { subjectId: $id, classifier: OUTDATED }) {
-                       minimizedComment { isMinimized }
-                     }
-                   }`,
-                  { id: existing.node_id }
-                );
-                core.info('Comment marked as outdated (hidden).');
+                try {
+                  await github.graphql(
+                    `mutation($id: ID!) {
+                       minimizeComment(input: { subjectId: $id, classifier: OUTDATED }) {
+                         minimizedComment { isMinimized }
+                       }
+                     }`,
+                    { id: existing.node_id }
+                  );
+                  core.info('Comment marked as outdated (hidden).');
+                } catch (err) {
+                  // The comment may have been deleted in the meantime - not a reason to fail the check
+                  core.warning(`Cannot hide the existing comment: ${err.message}`);
+                }
               }
               core.info('✅ PR description contains a checked license declaration.');
               return;
@@ -140,15 +152,19 @@ jobs:
               core.info('Comment added.');
             } else if (isMinimized) {
               // The declaration was removed again – unhide the existing comment instead of adding a new one
-              await github.graphql(
-                `mutation($id: ID!) {
-                   unminimizeComment(input: { subjectId: $id }) {
-                     unminimizedComment { isMinimized }
-                   }
-                 }`,
-                { id: existing.node_id }
-              );
-              core.info('Existing comment restored (unhidden).');
+              try {
+                await github.graphql(
+                  `mutation($id: ID!) {
+                     unminimizeComment(input: { subjectId: $id }) {
+                       unminimizedComment { isMinimized }
+                     }
+                   }`,
+                  { id: existing.node_id }
+                );
+                core.info('Existing comment restored (unhidden).');
+              } catch (err) {
+                core.warning(`Cannot restore the existing comment: ${err.message}`);
+              }
             }
 
             core.setFailed('❌ PR description does not contain a checked license declaration.');
