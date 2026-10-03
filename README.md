@@ -322,8 +322,8 @@ jobs:
 
 ```
 
-We need a use `pull_request_target` event because we need `GITHUB_TOKEN` with write permission
-to update labels, milestones of PR from forked repositories.
+We need to use the `pull_request_target` event because we need `GITHUB_TOKEN` with write permission
+to update labels and milestones of PRs from forked repositories.
 
 After the PR got merged each of the following actions are checked and applied if not already set:
 - current milestone will be set unless PR has `skip-changelog` label
@@ -342,6 +342,66 @@ branch: <branch name>
 ```
 
 This identifies the default for that branch.
+
+# PR check
+
+We need an action in project referencing [shared `pr-check.yml@v5`](https://github.com/apache/maven-gh-actions-shared/blob/v5/.github/workflows/pr-check.yml):
+
+```
+.github/workflows/pr-check.yml
+```
+
+with content:
+
+```yaml
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+
+name: PR check
+
+on:
+  pull_request_target:
+    types: [opened, edited, reopened, synchronize]
+
+jobs:
+  pr-check:
+    uses: apache/maven-gh-actions-shared/.github/workflows/pr-check.yml@v5
+```
+
+We need to use the `pull_request_target` event because we need `GITHUB_TOKEN` with write permission
+to comment on PRs from forked repositories. The workflow never checks out PR code.
+
+## Jobs
+
+### license-declaration
+
+The PR description must contain at least one checked Apache license declaration:
+
+```markdown
+- [x] I hereby declare this contribution to be licensed under the [Apache License Version 2.0, January 2004](https://www.apache.org/licenses/LICENSE-2.0)
+- [x] I hereby declare that I have filed an [Apache Individual Contributor License Agreement](https://www.apache.org/licenses/icla.pdf).
+```
+
+- when declaration is missing - one comment is added and the check fails
+- when the description is fixed - the comment is hidden as outdated
+- when declaration is removed again - the same comment is restored, never a duplicate
+
+The check is skipped for PRs opened by bots
+and by `OWNER` / `MEMBER` of the organization owning the repository.
 
 # Labels synchronization
 
