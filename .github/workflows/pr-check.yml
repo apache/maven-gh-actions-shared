@@ -37,10 +37,13 @@ jobs:
     runs-on: ubuntu-slim
     # Skip (a skipped job counts as successful, so a required check doesn't block the merge):
     # - PRs opened by bots (Dependabot, Renovate, other GitHub Apps),
-    # - PRs opened by members of the organization owning the repository (apache).
+    # - PRs opened by members/committers of the organization owning the repository (apache).
+    #   MEMBER       = org member with public membership (PMC member)
+    #   OWNER        = org owner
+    #   COLLABORATOR = committer whose org membership is private (covers most Apache committers)
     if: >-
       github.event.pull_request.user.type != 'Bot' &&
-      !contains(fromJSON('["OWNER", "MEMBER"]'), github.event.pull_request.author_association)
+      !contains(fromJSON('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.pull_request.author_association)
     # Prevents races (e.g. opened + edited in quick succession => two comments).
     # Do NOT define the same concurrency group in the caller – it would deadlock.
     concurrency:
