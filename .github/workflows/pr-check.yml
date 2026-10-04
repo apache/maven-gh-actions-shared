@@ -30,33 +30,18 @@ jobs:
   # - Missing       -> adds ONE comment and fails.
   # - Fixed         -> hides the comment as outdated and passes.
   # - Removed again -> unhides the same comment (no duplicates).
+  # - Bot or org member/committer -> skips silently (success).
   license-declaration:
     permissions:
       pull-requests: write
       issues: write # PR comments are "issue comments" in the API
     runs-on: ubuntu-slim
-    # Skip (a skipped job counts as successful, so a required check doesn't block the merge):
-    # - PRs opened by bots (Dependabot, Renovate, other GitHub Apps),
-    # - PRs opened by members/committers of the organization owning the repository (apache).
-    #   MEMBER       = org member with public membership (PMC member)
-    #   OWNER        = org owner
-    #   COLLABORATOR = committer whose org membership is private (covers most Apache committers)
-    if: >-
-      github.event.pull_request.user.type != 'Bot' &&
-      !contains(fromJSON('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.pull_request.author_association)
     # Prevents races (e.g. opened + edited in quick succession => two comments).
     # Do NOT define the same concurrency group in the caller – it would deadlock.
     concurrency:
       group: license-declaration-check-${{ github.repository }}-${{ github.event.pull_request.number }}
       cancel-in-progress: false
     steps:
-      - name: Debug context
-        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
-        with:
-          script: |
-            core.info('author_association: ' + github.event.pull_request?.author_association);
-            core.info('user.type: ' + github.event.pull_request?.user?.type);
-            core.info('eventName: ' + context.eventName);
       - name: Check license declaration
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         with:
@@ -78,6 +63,22 @@ jobs:
               return;
             }
 
+            // Fetch the current description from the API (the event payload may be stale on "Re-run jobs")
+            const { data: pr } = await github.rest.pulls.get({ owner, repo, pull_number: prNumber });
+
+            // Skip for bots and for org members/committers.
+            // Note: github.event.pull_request is NOT available inside reusable workflows called via
+            // workflow_call, so we must fetch author_association from the API here instead of
+            // relying on the YAML if: condition.
+            // MEMBER       = org member with public membership
+            // OWNER        = org owner
+            // COLLABORATOR = committer/member whose org membership is private (most Apache committers)
+            const skipAssociations = ['OWNER', 'MEMBER', 'COLLABORATOR'];
+            if (pr.user?.type === 'Bot' || skipAssociations.includes(pr.author_association)) {
+              core.info(`Skipping license check: user type="${pr.user?.type}", author_association="${pr.author_association}".`);
+              return;
+            }
+
             // "- [x] <declaration>" or "* [X] <declaration>", one per line, optional indentation/trailing spaces.
             // Links may use either http:// or https://.
             const escape = s => s
@@ -88,8 +89,6 @@ jobs:
               'm'
             );
 
-            // Fetch the current description from the API (the event payload may be stale on "Re-run jobs")
-            const { data: pr } = await github.rest.pulls.get({ owner, repo, pull_number: prNumber });
             const hasDeclaration = regex.test(pr.body || '');
 
             // Find our comment: author must be a bot and the comment must contain the marker.
