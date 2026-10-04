@@ -89,7 +89,9 @@ jobs:
             const { data: pr } = await github.rest.pulls.get({ owner, repo, pull_number: prNumber });
             const hasDeclaration = regex.test(pr.body || '');
 
-            // Committers don't need the declaration - checked here, as private org members are not MEMBER in the event payload
+            // Committers don't need the declaration.
+            // Note: private org members appear as CONTRIBUTOR in the event payload,
+            // so we check write access via the API instead of relying on author_association.
             let hasWriteAccess = false;
             try {
               const { data: perm } = await github.rest.repos.getCollaboratorPermissionLevel({
@@ -97,6 +99,7 @@ jobs:
               });
               hasWriteAccess = ['admin', 'write'].includes(perm.permission);
             } catch (err) {
+              // Fall back to requiring the declaration - a committer's PR may then fail the check
               core.warning(`Cannot read the permission of ${pr.user.login}: ${err.message}`);
             }
 
