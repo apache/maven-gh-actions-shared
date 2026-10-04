@@ -98,6 +98,9 @@ jobs:
                 owner, repo, username: pr.user.login,
               });
               hasWriteAccess = ['admin', 'write'].includes(perm.permission);
+              if (!hasWriteAccess) {
+                core.info(`Permission of ${pr.user.login}: ${perm.permission}`);
+              }
             } catch (err) {
               // Fall back to requiring the declaration - a committer's PR may then fail the check
               core.warning(`Cannot read the permission of ${pr.user.login}: ${err.message}`);
