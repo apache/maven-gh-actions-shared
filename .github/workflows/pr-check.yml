@@ -37,9 +37,10 @@ jobs:
     runs-on: ubuntu-slim
     # Skip (a skipped job counts as successful, so a required check doesn't block the merge):
     # - PRs opened by bots (Dependabot, Renovate, other GitHub Apps),
-    # - PRs opened by public members or collaborators of the repository.
-    # Private org members (most Apache committers) are reported as CONTRIBUTOR,
-    # so the script also passes authors with write access.
+    # - PRs opened by members/committers of the organization owning the repository (apache).
+    #   MEMBER       = org member with public membership (PMC member)
+    #   OWNER        = org owner
+    #   COLLABORATOR = committer whose org membership is private (covers most Apache committers)
     if: >-
       github.event.pull_request.user.type != 'Bot' &&
       !contains(fromJSON('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.pull_request.author_association)
