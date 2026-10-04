@@ -70,6 +70,10 @@ jobs:
               return;
             }
 
+            // Values used by the job condition, logged for diagnosis
+            const { user, author_association } = context.payload.pull_request;
+            core.info(`Author: ${user.login}, type: ${user.type}, author_association: ${author_association}`);
+
             // "- [x] <declaration>" or "* [X] <declaration>", one per line, optional indentation/trailing spaces.
             // Links may use either http:// or https://.
             const escape = s => s
