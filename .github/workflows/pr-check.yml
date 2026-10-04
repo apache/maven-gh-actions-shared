@@ -50,13 +50,6 @@ jobs:
       group: license-declaration-check-${{ github.repository }}-${{ github.event.pull_request.number }}
       cancel-in-progress: false
     steps:
-      - name: Debug context
-        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
-        with:
-          script: |
-            core.info('author_association: ' + github.event.pull_request?.author_association);
-            core.info('user.type: ' + github.event.pull_request?.user?.type);
-            core.info('eventName: ' + context.eventName);
       - name: Check license declaration
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         with:
