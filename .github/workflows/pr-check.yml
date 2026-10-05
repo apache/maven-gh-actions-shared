@@ -73,7 +73,7 @@ jobs:
 
             // Values used by the job condition, logged for diagnosis
             const { user, author_association } = context.payload.pull_request;
-            core.info(`Author: ${user.login}, type: ${user.type}, author_association: ${author_association}`);
+            core.info(`Author: ${user?.login}, type: ${user?.type}, author_association: ${author_association}`);
 
             // "- [x] <declaration>" or "* [X] <declaration>", one per line, optional indentation/trailing spaces.
             // Links may use either http:// or https://.
@@ -97,10 +97,8 @@ jobs:
               const { data: perm } = await github.rest.repos.getCollaboratorPermissionLevel({
                 owner, repo, username: pr.user.login,
               });
-              hasWriteAccess = ['admin', 'write'].includes(perm.permission);
-              if (!hasWriteAccess) {
-                core.info(`Permission of ${pr.user.login}: ${perm.permission}`);
-              }
+              hasWriteAccess = ['admin', 'maintain', 'write'].includes(perm.permission);
+              core.info(`Permission of ${pr.user.login}: ${perm.permission}`);
             } catch (err) {
               // Fall back to requiring the declaration - a committer's PR may then fail the check
               core.warning(`Cannot read the permission of ${pr.user.login}: ${err.message}`);
