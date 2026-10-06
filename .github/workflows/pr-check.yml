@@ -16,7 +16,7 @@
 # under the License.
 
 # Reusable workflow grouping the checks run against a pull request.
-name: PR check
+name: PR Check
 
 on:
   workflow_call:
@@ -71,6 +71,10 @@ jobs:
               return;
             }
 
+            // Values used by the job condition, logged for diagnosis
+            const { user, author_association } = context.payload.pull_request;
+            core.info(`Author: ${user?.login}, type: ${user?.type}, author_association: ${author_association}`);
+
             // "- [x] <declaration>" or "* [X] <declaration>", one per line, optional indentation/trailing spaces.
             // Links may use either http:// or https://.
             const escape = s => s
@@ -84,6 +88,21 @@ jobs:
             // Fetch the current description from the API (the event payload may be stale on "Re-run jobs")
             const { data: pr } = await github.rest.pulls.get({ owner, repo, pull_number: prNumber });
             const hasDeclaration = regex.test(pr.body || '');
+
+            // Committers don't need the declaration.
+            // Note: private org members appear as CONTRIBUTOR in the event payload,
+            // so we check write access via the API instead of relying on author_association.
+            let hasWriteAccess = false;
+            try {
+              const { data: perm } = await github.rest.repos.getCollaboratorPermissionLevel({
+                owner, repo, username: pr.user.login,
+              });
+              hasWriteAccess = ['admin', 'maintain', 'write'].includes(perm.permission);
+              core.info(`Permission of ${pr.user.login}: ${perm.permission}`);
+            } catch (err) {
+              // Fall back to requiring the declaration - a committer's PR may then fail the check
+              core.warning(`Cannot read the permission of ${pr.user.login}: ${err.message}`);
+            }
 
             // Find our comment: author must be a bot and the comment must contain the marker.
             // Iterate page by page and stop as soon as it is found - it is usually one of the first comments.
@@ -113,7 +132,7 @@ jobs:
             }
 
             // ---------- Declaration OK ----------
-            if (hasDeclaration) {
+            if (hasDeclaration || hasWriteAccess) {
               if (existing && !isMinimized) {
                 try {
                   await github.graphql(
@@ -130,7 +149,9 @@ jobs:
                   core.warning(`Cannot hide the existing comment: ${err.message}`);
                 }
               }
-              core.info('✅ PR description contains a checked license declaration.');
+              core.info(hasDeclaration
+                ? '✅ PR description contains a checked license declaration.'
+                : `✅ ${pr.user.login} has write access to the repository - declaration not required.`);
               return;
             }
 
