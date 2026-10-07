@@ -32,4 +32,6 @@ jobs:
 
     steps:
       - run: echo "ok"
+        env:
+          GITHUB_CONTEXT: ${{ toJson(github) }}
         shell: bash
