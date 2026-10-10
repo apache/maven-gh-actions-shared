@@ -99,7 +99,19 @@ categories:
         - skip-changelog
         - invalid
 
-change-template: '- $TITLE ([#$NUMBER]($URL)) @$AUTHOR'
+# Dependabot bumps the same dependency several times between releases, most
+# often the parent POM and the test libraries. Group each dependency into one
+# entry with the full version range; $NUMBERS lists every pull request of it.
+# group_in keeps a bump in one module apart from the same bump in another.
+
+group-changes:
+  - pattern: '/^Bump (?<group>.+?) from (?<from>\S+) to (?<to>\S+)(?<group_in> in \S+)?$/'
+    title-template: 'Bump $GROUP from $FIRST_FROM to $LAST_TO$GROUP_IN'
+
+  - pattern: '/^build: bump (?<group>.+?) from (?<from>\S+) to (?<to>\S+)(?<group_in> in \S+)?$/'
+    title-template: 'build: bump $GROUP from $FIRST_FROM to $LAST_TO$GROUP_IN'
+
+change-template: '- $TITLE ($NUMBERS) @$AUTHOR'
 
 template: |
   <!-- Optional: add a release summary here -->
