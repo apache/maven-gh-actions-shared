@@ -325,14 +325,26 @@ jobs:
           show-download-progress: ${{ inputs.show-download-progress }}
 
       - name: Set up Maven
-        run:
-          mvn --errors --batch-mode --show-version org.apache.maven.plugins:maven-wrapper-plugin:3.3.4:wrapper ${{ inputs.maven-args }} "-Dmaven=${{ needs.setup-maven-version.outputs.version }}"
+        id: maven
+        shell: bash
+        env:
+          MAVEN_VERSION: ${{ needs.setup-maven-version.outputs.version }}
+        # use the runner's Maven when it already is the requested version; otherwise download it with the wrapper
+        run: |
+          runner_version="$(mvn --batch-mode --version 2>/dev/null | sed -n 's/^Apache Maven \([^ ]*\).*/\1/p' | head -n 1)"
+          if [ "$runner_version" = "$MAVEN_VERSION" ]; then
+            echo "Using the runner's Maven $runner_version"
+            echo "mvn=mvn" >> "$GITHUB_OUTPUT"
+          else
+            mvn --errors --batch-mode --show-version org.apache.maven.plugins:maven-wrapper-plugin:3.3.4:wrapper ${{ inputs.maven-args }} "-Dmaven=$MAVEN_VERSION"
+            echo "mvn=./mvnw" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Build with Maven
-        run: ./mvnw --errors --batch-mode --show-version ${{ inputs.maven-args }} ${{ inputs.ff-goal }}
+        run: ${{ steps.maven.outputs.mvn }} --errors --batch-mode --show-version ${{ inputs.maven-args }} ${{ inputs.ff-goal }}
 
       - name: Build Maven Site
-        run: ./mvnw --errors --batch-mode --show-version ${{ inputs.maven-args }} ${{ inputs.ff-site-goal }}
+        run: ${{ steps.maven.outputs.mvn }} --errors --batch-mode --show-version ${{ inputs.maven-args }} ${{ inputs.ff-site-goal }}
         if: inputs.ff-site-run
 
       - name: Upload Maven Site
@@ -356,7 +368,7 @@ jobs:
         shell: bash
 
       - name: Clean Ensuring no file handle remains open on windows
-        run: ./mvnw clean --errors --batch-mode --show-version -Dmaven.clean.retryOnError ${{ inputs.maven-args }} 
+        run: ${{ steps.maven.outputs.mvn }} clean --errors --batch-mode --show-version -Dmaven.clean.retryOnError ${{ inputs.maven-args }} 
 
   verify:
     if: >
@@ -457,12 +469,25 @@ jobs:
           show-download-progress: ${{ inputs.show-download-progress }}
 
       - name: Set up Maven
+        id: maven
         if: steps.should-run.conclusion == 'success'
-        run: mvn --errors --batch-mode --show-version org.apache.maven.plugins:maven-wrapper-plugin:3.3.4:wrapper ${{ inputs.maven-args }} "-Dmaven=${{ matrix.maven }}"
+        shell: bash
+        env:
+          MAVEN_VERSION: ${{ matrix.maven }}
+        # use the runner's Maven when it already is the requested version; otherwise download it with the wrapper
+        run: |
+          runner_version="$(mvn --batch-mode --version 2>/dev/null | sed -n 's/^Apache Maven \([^ ]*\).*/\1/p' | head -n 1)"
+          if [ "$runner_version" = "$MAVEN_VERSION" ]; then
+            echo "Using the runner's Maven $runner_version"
+            echo "mvn=mvn" >> "$GITHUB_OUTPUT"
+          else
+            mvn --errors --batch-mode --show-version org.apache.maven.plugins:maven-wrapper-plugin:3.3.4:wrapper ${{ inputs.maven-args }} "-Dmaven=$MAVEN_VERSION"
+            echo "mvn=./mvnw" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Build with Maven
         if: steps.should-run.conclusion == 'success'
-        run: ./mvnw --errors --batch-mode --show-version ${{ inputs.maven-args }} ${{ inputs.verify-goal }}
+        run: ${{ steps.maven.outputs.mvn }} --errors --batch-mode --show-version ${{ inputs.maven-args }} ${{ inputs.verify-goal }}
 
       - name: Upload artifact on failure
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -478,4 +503,4 @@ jobs:
 
       - name: Clean Ensuring no file handle remains open on windows
         if: steps.should-run.conclusion == 'success'
-        run: ./mvnw clean --errors --batch-mode --show-version "-Dmaven.clean.retryOnError"
+        run: ${{ steps.maven.outputs.mvn }} clean --errors --batch-mode --show-version "-Dmaven.clean.retryOnError"
