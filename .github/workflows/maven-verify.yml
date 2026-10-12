@@ -315,6 +315,8 @@ jobs:
           java-version: ${{ inputs.ff-jdk-toolchain }}
           distribution: ${{ inputs.ff-jdk-distribution }}
           cache-jdk: true
+          # only the default branch saves caches; other branches and pull requests restore them
+          cache-read-only: ${{ github.ref_name != github.event.repository.default_branch }}
           show-download-progress: ${{ inputs.show-download-progress }}
 
       - name: Set up JDK
@@ -323,6 +325,8 @@ jobs:
           java-version: ${{ inputs.ff-jdk }}
           distribution: ${{ inputs.ff-jdk-distribution }}
           cache: 'maven'
+          # only the default branch saves caches; other branches and pull requests restore them
+          cache-read-only: ${{ github.ref_name != github.event.repository.default_branch }}
           show-download-progress: ${{ inputs.show-download-progress }}
 
       - name: Set up Maven
@@ -447,6 +451,8 @@ jobs:
           java-version: ${{ inputs.jdk-toolchain }}
           distribution: ${{ matrix.distribution }}
           cache-jdk: true
+          # only the default branch saves caches; other branches and pull requests restore them
+          cache-read-only: ${{ github.ref_name != github.event.repository.default_branch }}
           show-download-progress: ${{ inputs.show-download-progress }}
 
       - name: Set up JDK
@@ -456,6 +462,8 @@ jobs:
           java-version: ${{ matrix.jdk }}
           distribution: ${{ matrix.distribution }}
           cache: 'maven'
+          # only the default branch saves caches; other branches and pull requests restore them
+          cache-read-only: ${{ github.ref_name != github.event.repository.default_branch }}
           show-download-progress: ${{ inputs.show-download-progress }}
 
       - name: Set up Maven
