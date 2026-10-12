@@ -83,7 +83,7 @@ jobs:
       !startsWith(github.event.head_commit.message , '[maven-release-plugin] prepare for next development iteration')
 
     steps:
-      - uses: release-drafter/release-drafter@72967cdc98ddd3160f1fc3dff619de365e137dd0  # v7.9.0
+      - uses: release-drafter/release-drafter@978bb0b30c5ee8cdd332ced253758157150d43f0  # v7.10.0
         id: release-drafter
         with:
           config-name: ${{ inputs.config-name }}
