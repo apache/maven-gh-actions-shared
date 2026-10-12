@@ -362,13 +362,15 @@ jobs:
           MAVEN_VERSION: ${{ needs.setup-maven-version.outputs.version }}
         run: |
           url="https://repo.maven.apache.org/maven2/org/apache/maven/apache-maven/$MAVEN_VERSION/apache-maven-$MAVEN_VERSION-bin.tar.gz"
-          archive="$RUNNER_TEMP/apache-maven-$MAVEN_VERSION-bin.tar.gz"
+          # a Unix-style path: tar in Git Bash on Windows takes "D:" in $RUNNER_TEMP for a remote host
+          mkdir -p ~/.m2/dists
+          archive="$HOME/.m2/dists/apache-maven-$MAVEN_VERSION-bin.tar.gz"
           curl --fail --silent --show-error --location --retry 5 --retry-all-errors --output "$archive" "$url"
           expected="$(curl --fail --silent --show-error --location --retry 5 --retry-all-errors "$url.sha512" | cut -d ' ' -f 1)"
           actual="$(openssl dgst -sha512 -r "$archive" | cut -d ' ' -f 1)"
           [ "$expected" = "$actual" ] || { echo "::error::SHA-512 mismatch for $url"; exit 1; }
-          mkdir -p ~/.m2/dists
           tar -xzf "$archive" -C ~/.m2/dists
+          rm "$archive"
 
       - name: Set up Maven
         if: steps.runner-maven.outputs.matches != 'true'
@@ -539,13 +541,15 @@ jobs:
           MAVEN_VERSION: ${{ matrix.maven }}
         run: |
           url="https://repo.maven.apache.org/maven2/org/apache/maven/apache-maven/$MAVEN_VERSION/apache-maven-$MAVEN_VERSION-bin.tar.gz"
-          archive="$RUNNER_TEMP/apache-maven-$MAVEN_VERSION-bin.tar.gz"
+          # a Unix-style path: tar in Git Bash on Windows takes "D:" in $RUNNER_TEMP for a remote host
+          mkdir -p ~/.m2/dists
+          archive="$HOME/.m2/dists/apache-maven-$MAVEN_VERSION-bin.tar.gz"
           curl --fail --silent --show-error --location --retry 5 --retry-all-errors --output "$archive" "$url"
           expected="$(curl --fail --silent --show-error --location --retry 5 --retry-all-errors "$url.sha512" | cut -d ' ' -f 1)"
           actual="$(openssl dgst -sha512 -r "$archive" | cut -d ' ' -f 1)"
           [ "$expected" = "$actual" ] || { echo "::error::SHA-512 mismatch for $url"; exit 1; }
-          mkdir -p ~/.m2/dists
           tar -xzf "$archive" -C ~/.m2/dists
+          rm "$archive"
 
       - name: Set up Maven
         if: steps.should-run.conclusion == 'success' && steps.runner-maven.outputs.matches != 'true'
