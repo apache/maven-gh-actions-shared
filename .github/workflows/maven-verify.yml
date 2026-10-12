@@ -314,6 +314,7 @@ jobs:
         with:
           java-version: ${{ inputs.ff-jdk-toolchain }}
           distribution: ${{ inputs.ff-jdk-distribution }}
+          cache-jdk: true
           show-download-progress: ${{ inputs.show-download-progress }}
 
       - name: Set up JDK
@@ -445,6 +446,7 @@ jobs:
         with:
           java-version: ${{ inputs.jdk-toolchain }}
           distribution: ${{ matrix.distribution }}
+          cache-jdk: true
           show-download-progress: ${{ inputs.show-download-progress }}
 
       - name: Set up JDK
