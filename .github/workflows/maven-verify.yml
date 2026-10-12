@@ -366,9 +366,17 @@ jobs:
           mkdir -p ~/.m2/dists
           archive="$HOME/.m2/dists/apache-maven-$MAVEN_VERSION-bin.tar.gz"
           curl --fail --silent --show-error --location --retry 5 --retry-all-errors --output "$archive" "$url"
-          expected="$(curl --fail --silent --show-error --location --retry 5 --retry-all-errors "$url.sha512" | cut -d ' ' -f 1)"
-          actual="$(openssl dgst -sha512 -r "$archive" | cut -d ' ' -f 1)"
-          [ "$expected" = "$actual" ] || { echo "::error::SHA-512 mismatch for $url"; exit 1; }
+          # Central has no .sha512 before Maven 3.9.1; fall back to .sha1 there
+          # (--retry without --retry-all-errors: a 404 is final)
+          if expected="$(curl --fail --silent --location --retry 5 "$url.sha512")"; then
+            algorithm=sha512
+          else
+            expected="$(curl --fail --silent --show-error --location --retry 5 --retry-all-errors "$url.sha1")"
+            algorithm=sha1
+          fi
+          expected="$(echo "$expected" | cut -d ' ' -f 1)"
+          actual="$(openssl dgst -$algorithm -r "$archive" | cut -d ' ' -f 1)"
+          [ "$expected" = "$actual" ] || { echo "::error::$algorithm mismatch for $url"; exit 1; }
           tar -xzf "$archive" -C ~/.m2/dists
           rm "$archive"
 
@@ -553,9 +561,17 @@ jobs:
           mkdir -p ~/.m2/dists
           archive="$HOME/.m2/dists/apache-maven-$MAVEN_VERSION-bin.tar.gz"
           curl --fail --silent --show-error --location --retry 5 --retry-all-errors --output "$archive" "$url"
-          expected="$(curl --fail --silent --show-error --location --retry 5 --retry-all-errors "$url.sha512" | cut -d ' ' -f 1)"
-          actual="$(openssl dgst -sha512 -r "$archive" | cut -d ' ' -f 1)"
-          [ "$expected" = "$actual" ] || { echo "::error::SHA-512 mismatch for $url"; exit 1; }
+          # Central has no .sha512 before Maven 3.9.1; fall back to .sha1 there
+          # (--retry without --retry-all-errors: a 404 is final)
+          if expected="$(curl --fail --silent --location --retry 5 "$url.sha512")"; then
+            algorithm=sha512
+          else
+            expected="$(curl --fail --silent --show-error --location --retry 5 --retry-all-errors "$url.sha1")"
+            algorithm=sha1
+          fi
+          expected="$(echo "$expected" | cut -d ' ' -f 1)"
+          actual="$(openssl dgst -$algorithm -r "$archive" | cut -d ' ' -f 1)"
+          [ "$expected" = "$actual" ] || { echo "::error::$algorithm mismatch for $url"; exit 1; }
           tar -xzf "$archive" -C ~/.m2/dists
           rm "$archive"
 
