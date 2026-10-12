@@ -337,27 +337,54 @@ jobs:
           cache-read-only: ${{ github.event_name == 'pull_request' || startsWith(github.ref_name, 'dependabot/') || (inputs.cache-save-default-branch-only && github.ref_name != github.event.repository.default_branch) }}
           show-download-progress: ${{ inputs.show-download-progress }}
 
-      - name: Set up Maven
-        id: maven
+      - name: Check the runner's Maven
+        id: runner-maven
         shell: bash
         env:
           MAVEN_VERSION: ${{ needs.setup-maven-version.outputs.version }}
-        # use the runner's Maven when it already is the requested version; otherwise download it with the wrapper
         run: |
           runner_version="$(mvn --batch-mode --version 2>/dev/null | sed -n 's/^Apache Maven \([^ ]*\).*/\1/p' | head -n 1)"
-          if [ "$runner_version" = "$MAVEN_VERSION" ]; then
-            echo "Using the runner's Maven $runner_version"
-            echo "mvn=mvn" >> "$GITHUB_OUTPUT"
-          else
-            mvn --errors --batch-mode --show-version org.apache.maven.plugins:maven-wrapper-plugin:3.3.4:wrapper ${{ inputs.maven-args }} "-Dmaven=$MAVEN_VERSION"
-            echo "mvn=./mvnw" >> "$GITHUB_OUTPUT"
-          fi
+          echo "Runner's Maven: ${runner_version:-none}, requested: $MAVEN_VERSION"
+          if [ "$runner_version" = "$MAVEN_VERSION" ]; then echo "matches=true" >> "$GITHUB_OUTPUT"; fi
+
+      - name: Restore Maven from the cache
+        id: maven-cache
+        if: steps.runner-maven.outputs.matches != 'true'
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.m2/dists/apache-maven-${{ needs.setup-maven-version.outputs.version }}
+          key: maven-dist-${{ runner.os }}-${{ needs.setup-maven-version.outputs.version }}
+
+      - name: Download Maven
+        if: steps.runner-maven.outputs.matches != 'true' && steps.maven-cache.outputs.cache-hit != 'true'
+        shell: bash
+        env:
+          MAVEN_VERSION: ${{ needs.setup-maven-version.outputs.version }}
+        run: |
+          url="https://repo.maven.apache.org/maven2/org/apache/maven/apache-maven/$MAVEN_VERSION/apache-maven-$MAVEN_VERSION-bin.tar.gz"
+          archive="$RUNNER_TEMP/apache-maven-$MAVEN_VERSION-bin.tar.gz"
+          curl --fail --silent --show-error --location --retry 5 --retry-all-errors --output "$archive" "$url"
+          expected="$(curl --fail --silent --show-error --location --retry 5 --retry-all-errors "$url.sha512" | cut -d ' ' -f 1)"
+          actual="$(openssl dgst -sha512 -r "$archive" | cut -d ' ' -f 1)"
+          [ "$expected" = "$actual" ] || { echo "::error::SHA-512 mismatch for $url"; exit 1; }
+          mkdir -p ~/.m2/dists
+          tar -xzf "$archive" -C ~/.m2/dists
+
+      - name: Set up Maven
+        if: steps.runner-maven.outputs.matches != 'true'
+        shell: bash
+        env:
+          MAVEN_VERSION: ${{ needs.setup-maven-version.outputs.version }}
+        run: |
+          bin="$HOME/.m2/dists/apache-maven-$MAVEN_VERSION/bin"
+          if command -v cygpath > /dev/null; then bin="$(cygpath --windows "$bin")"; fi
+          echo "$bin" >> "$GITHUB_PATH"
 
       - name: Build with Maven
-        run: ${{ steps.maven.outputs.mvn }} --errors --batch-mode --show-version ${{ inputs.maven-args }} ${{ inputs.ff-goal }}
+        run: mvn --errors --batch-mode --show-version ${{ inputs.maven-args }} ${{ inputs.ff-goal }}
 
       - name: Build Maven Site
-        run: ${{ steps.maven.outputs.mvn }} --errors --batch-mode --show-version ${{ inputs.maven-args }} ${{ inputs.ff-site-goal }}
+        run: mvn --errors --batch-mode --show-version ${{ inputs.maven-args }} ${{ inputs.ff-site-goal }}
         if: inputs.ff-site-run
 
       - name: Upload Maven Site
@@ -381,7 +408,7 @@ jobs:
         shell: bash
 
       - name: Clean Ensuring no file handle remains open on windows
-        run: ${{ steps.maven.outputs.mvn }} clean --errors --batch-mode --show-version -Dmaven.clean.retryOnError ${{ inputs.maven-args }} 
+        run: mvn clean --errors --batch-mode --show-version -Dmaven.clean.retryOnError ${{ inputs.maven-args }} 
 
   verify:
     if: >
@@ -486,26 +513,53 @@ jobs:
           cache-read-only: ${{ github.event_name == 'pull_request' || startsWith(github.ref_name, 'dependabot/') || (inputs.cache-save-default-branch-only && github.ref_name != github.event.repository.default_branch) }}
           show-download-progress: ${{ inputs.show-download-progress }}
 
-      - name: Set up Maven
-        id: maven
+      - name: Check the runner's Maven
+        id: runner-maven
         if: steps.should-run.conclusion == 'success'
         shell: bash
         env:
           MAVEN_VERSION: ${{ matrix.maven }}
-        # use the runner's Maven when it already is the requested version; otherwise download it with the wrapper
         run: |
           runner_version="$(mvn --batch-mode --version 2>/dev/null | sed -n 's/^Apache Maven \([^ ]*\).*/\1/p' | head -n 1)"
-          if [ "$runner_version" = "$MAVEN_VERSION" ]; then
-            echo "Using the runner's Maven $runner_version"
-            echo "mvn=mvn" >> "$GITHUB_OUTPUT"
-          else
-            mvn --errors --batch-mode --show-version org.apache.maven.plugins:maven-wrapper-plugin:3.3.4:wrapper ${{ inputs.maven-args }} "-Dmaven=$MAVEN_VERSION"
-            echo "mvn=./mvnw" >> "$GITHUB_OUTPUT"
-          fi
+          echo "Runner's Maven: ${runner_version:-none}, requested: $MAVEN_VERSION"
+          if [ "$runner_version" = "$MAVEN_VERSION" ]; then echo "matches=true" >> "$GITHUB_OUTPUT"; fi
+
+      - name: Restore Maven from the cache
+        id: maven-cache
+        if: steps.should-run.conclusion == 'success' && steps.runner-maven.outputs.matches != 'true'
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.m2/dists/apache-maven-${{ matrix.maven }}
+          key: maven-dist-${{ runner.os }}-${{ matrix.maven }}
+
+      - name: Download Maven
+        if: steps.should-run.conclusion == 'success' && steps.runner-maven.outputs.matches != 'true' && steps.maven-cache.outputs.cache-hit != 'true'
+        shell: bash
+        env:
+          MAVEN_VERSION: ${{ matrix.maven }}
+        run: |
+          url="https://repo.maven.apache.org/maven2/org/apache/maven/apache-maven/$MAVEN_VERSION/apache-maven-$MAVEN_VERSION-bin.tar.gz"
+          archive="$RUNNER_TEMP/apache-maven-$MAVEN_VERSION-bin.tar.gz"
+          curl --fail --silent --show-error --location --retry 5 --retry-all-errors --output "$archive" "$url"
+          expected="$(curl --fail --silent --show-error --location --retry 5 --retry-all-errors "$url.sha512" | cut -d ' ' -f 1)"
+          actual="$(openssl dgst -sha512 -r "$archive" | cut -d ' ' -f 1)"
+          [ "$expected" = "$actual" ] || { echo "::error::SHA-512 mismatch for $url"; exit 1; }
+          mkdir -p ~/.m2/dists
+          tar -xzf "$archive" -C ~/.m2/dists
+
+      - name: Set up Maven
+        if: steps.should-run.conclusion == 'success' && steps.runner-maven.outputs.matches != 'true'
+        shell: bash
+        env:
+          MAVEN_VERSION: ${{ matrix.maven }}
+        run: |
+          bin="$HOME/.m2/dists/apache-maven-$MAVEN_VERSION/bin"
+          if command -v cygpath > /dev/null; then bin="$(cygpath --windows "$bin")"; fi
+          echo "$bin" >> "$GITHUB_PATH"
 
       - name: Build with Maven
         if: steps.should-run.conclusion == 'success'
-        run: ${{ steps.maven.outputs.mvn }} --errors --batch-mode --show-version ${{ inputs.maven-args }} ${{ inputs.verify-goal }}
+        run: mvn --errors --batch-mode --show-version ${{ inputs.maven-args }} ${{ inputs.verify-goal }}
 
       - name: Upload artifact on failure
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -521,4 +575,4 @@ jobs:
 
       - name: Clean Ensuring no file handle remains open on windows
         if: steps.should-run.conclusion == 'success'
-        run: ${{ steps.maven.outputs.mvn }} clean --errors --batch-mode --show-version "-Dmaven.clean.retryOnError"
+        run: mvn clean --errors --batch-mode --show-version "-Dmaven.clean.retryOnError"
