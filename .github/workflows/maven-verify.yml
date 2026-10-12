@@ -350,7 +350,7 @@ jobs:
       - name: Restore Maven from the cache
         id: maven-cache
         if: steps.runner-maven.outputs.matches != 'true'
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.m2/dists/apache-maven-${{ needs.setup-maven-version.outputs.version }}
           key: maven-dist-${{ runner.os }}-${{ needs.setup-maven-version.outputs.version }}
@@ -371,6 +371,14 @@ jobs:
           [ "$expected" = "$actual" ] || { echo "::error::SHA-512 mismatch for $url"; exit 1; }
           tar -xzf "$archive" -C ~/.m2/dists
           rm "$archive"
+
+      - name: Save Maven to the cache
+        # only the default branch saves; other branches and pull requests restore its entry
+        if: steps.runner-maven.outputs.matches != 'true' && steps.maven-cache.outputs.cache-hit != 'true' && github.ref_name == github.event.repository.default_branch
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.m2/dists/apache-maven-${{ needs.setup-maven-version.outputs.version }}
+          key: maven-dist-${{ runner.os }}-${{ needs.setup-maven-version.outputs.version }}
 
       - name: Set up Maven
         if: steps.runner-maven.outputs.matches != 'true'
@@ -529,7 +537,7 @@ jobs:
       - name: Restore Maven from the cache
         id: maven-cache
         if: steps.should-run.conclusion == 'success' && steps.runner-maven.outputs.matches != 'true'
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.m2/dists/apache-maven-${{ matrix.maven }}
           key: maven-dist-${{ runner.os }}-${{ matrix.maven }}
@@ -550,6 +558,14 @@ jobs:
           [ "$expected" = "$actual" ] || { echo "::error::SHA-512 mismatch for $url"; exit 1; }
           tar -xzf "$archive" -C ~/.m2/dists
           rm "$archive"
+
+      - name: Save Maven to the cache
+        # only the default branch saves; other branches and pull requests restore its entry
+        if: steps.should-run.conclusion == 'success' && steps.runner-maven.outputs.matches != 'true' && steps.maven-cache.outputs.cache-hit != 'true' && github.ref_name == github.event.repository.default_branch
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.m2/dists/apache-maven-${{ matrix.maven }}
+          key: maven-dist-${{ runner.os }}-${{ matrix.maven }}
 
       - name: Set up Maven
         if: steps.should-run.conclusion == 'success' && steps.runner-maven.outputs.matches != 'true'
