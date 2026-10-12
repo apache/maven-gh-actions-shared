@@ -343,7 +343,7 @@ jobs:
         env:
           MAVEN_VERSION: ${{ needs.setup-maven-version.outputs.version }}
         run: |
-          runner_version="$(mvn --batch-mode --version 2>/dev/null | sed -n 's/^Apache Maven \([^ ]*\).*/\1/p' | head -n 1)"
+          runner_version="$(mvn --batch-mode --version -q 2>/dev/null | head -n 1 | tr -d '\r')"
           echo "Runner's Maven: ${runner_version:-none}, requested: $MAVEN_VERSION"
           if [ "$runner_version" = "$MAVEN_VERSION" ]; then echo "matches=true" >> "$GITHUB_OUTPUT"; fi
 
@@ -530,7 +530,7 @@ jobs:
         env:
           MAVEN_VERSION: ${{ matrix.maven }}
         run: |
-          runner_version="$(mvn --batch-mode --version 2>/dev/null | sed -n 's/^Apache Maven \([^ ]*\).*/\1/p' | head -n 1)"
+          runner_version="$(mvn --batch-mode --version -q 2>/dev/null | head -n 1 | tr -d '\r')"
           echo "Runner's Maven: ${runner_version:-none}, requested: $MAVEN_VERSION"
           if [ "$runner_version" = "$MAVEN_VERSION" ]; then echo "matches=true" >> "$GITHUB_OUTPUT"; fi
 
