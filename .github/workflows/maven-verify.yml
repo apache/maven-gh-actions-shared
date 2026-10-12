@@ -220,13 +220,13 @@ on:
         default: false
         type: boolean
 
-      cache-save-branches:
+      cache-save-default-branch-only:
         description: >-
-          JSON array of branch names that save the Maven and JDK caches, in addition to the default branch.
-          Other branches and pull requests only restore the default branch's caches.
+          Save the Maven and JDK caches only on the default branch; other branches restore them.
+          By default every pushed branch saves except dependabot/ branches, and pull requests only restore.
         required: false
-        default: '[]'
-        type: string
+        default: false
+        type: boolean
 
 # allow single build per branch or PR
 concurrency:
@@ -323,8 +323,8 @@ jobs:
           java-version: ${{ inputs.ff-jdk-toolchain }}
           distribution: ${{ inputs.ff-jdk-distribution }}
           cache-jdk: true
-          # only the default branch and cache-save-branches save caches; others restore the default branch's
-          cache-read-only: ${{ github.ref_name != github.event.repository.default_branch && !contains(fromJSON(inputs.cache-save-branches), github.ref_name) }}
+          # pull requests and dependabot/ branches restore caches without saving their own copies
+          cache-read-only: ${{ github.event_name == 'pull_request' || startsWith(github.ref_name, 'dependabot/') || (inputs.cache-save-default-branch-only && github.ref_name != github.event.repository.default_branch) }}
           show-download-progress: ${{ inputs.show-download-progress }}
 
       - name: Set up JDK
@@ -333,8 +333,8 @@ jobs:
           java-version: ${{ inputs.ff-jdk }}
           distribution: ${{ inputs.ff-jdk-distribution }}
           cache: 'maven'
-          # only the default branch and cache-save-branches save caches; others restore the default branch's
-          cache-read-only: ${{ github.ref_name != github.event.repository.default_branch && !contains(fromJSON(inputs.cache-save-branches), github.ref_name) }}
+          # pull requests and dependabot/ branches restore caches without saving their own copies
+          cache-read-only: ${{ github.event_name == 'pull_request' || startsWith(github.ref_name, 'dependabot/') || (inputs.cache-save-default-branch-only && github.ref_name != github.event.repository.default_branch) }}
           show-download-progress: ${{ inputs.show-download-progress }}
 
       - name: Set up Maven
@@ -459,8 +459,8 @@ jobs:
           java-version: ${{ inputs.jdk-toolchain }}
           distribution: ${{ matrix.distribution }}
           cache-jdk: true
-          # only the default branch and cache-save-branches save caches; others restore the default branch's
-          cache-read-only: ${{ github.ref_name != github.event.repository.default_branch && !contains(fromJSON(inputs.cache-save-branches), github.ref_name) }}
+          # pull requests and dependabot/ branches restore caches without saving their own copies
+          cache-read-only: ${{ github.event_name == 'pull_request' || startsWith(github.ref_name, 'dependabot/') || (inputs.cache-save-default-branch-only && github.ref_name != github.event.repository.default_branch) }}
           show-download-progress: ${{ inputs.show-download-progress }}
 
       - name: Set up JDK
@@ -470,8 +470,8 @@ jobs:
           java-version: ${{ matrix.jdk }}
           distribution: ${{ matrix.distribution }}
           cache: 'maven'
-          # only the default branch and cache-save-branches save caches; others restore the default branch's
-          cache-read-only: ${{ github.ref_name != github.event.repository.default_branch && !contains(fromJSON(inputs.cache-save-branches), github.ref_name) }}
+          # pull requests and dependabot/ branches restore caches without saving their own copies
+          cache-read-only: ${{ github.event_name == 'pull_request' || startsWith(github.ref_name, 'dependabot/') || (inputs.cache-save-default-branch-only && github.ref_name != github.event.repository.default_branch) }}
           show-download-progress: ${{ inputs.show-download-progress }}
 
       - name: Set up Maven
