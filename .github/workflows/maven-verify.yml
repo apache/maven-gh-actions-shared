@@ -399,7 +399,15 @@ jobs:
           echo "$bin" >> "$GITHUB_PATH"
 
       - name: Build with Maven
-        run: mvn --errors --batch-mode --show-version ${{ inputs.maven-args }} ${{ inputs.ff-goal }}
+        shell: bash
+        env:
+          MAVEN_VERSION: ${{ needs.setup-maven-version.outputs.version }}
+          ARGS: ${{ inputs.maven-args }}
+          GOAL: ${{ inputs.ff-goal }}
+        run: |
+          # Maven 3 has no optional profiles: it reads "?run-its" as a profile of that name and leaves run-its off
+          if [[ "$MAVEN_VERSION" == 3.* ]]; then GOAL="${GOAL//\?run-its/run-its}"; fi
+          eval "mvn --errors --batch-mode --show-version $ARGS $GOAL"
 
       - name: Build Maven Site
         run: mvn --errors --batch-mode --show-version ${{ inputs.maven-args }} ${{ inputs.ff-site-goal }}
@@ -595,7 +603,15 @@ jobs:
 
       - name: Build with Maven
         if: steps.should-run.conclusion == 'success'
-        run: mvn --errors --batch-mode --show-version ${{ inputs.maven-args }} ${{ inputs.verify-goal }}
+        shell: bash
+        env:
+          MAVEN_VERSION: ${{ matrix.maven || needs.setup-maven-version.outputs.version }}
+          ARGS: ${{ inputs.maven-args }}
+          GOAL: ${{ inputs.verify-goal }}
+        run: |
+          # Maven 3 has no optional profiles: it reads "?run-its" as a profile of that name and leaves run-its off
+          if [[ "$MAVEN_VERSION" == 3.* ]]; then GOAL="${GOAL//\?run-its/run-its}"; fi
+          eval "mvn --errors --batch-mode --show-version $ARGS $GOAL"
 
       - name: Upload artifact on failure
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
