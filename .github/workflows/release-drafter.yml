@@ -60,7 +60,8 @@ jobs:
         with:
           java-version: '21'
           distribution: 'zulu'
-          cache: 'maven'
+          # no cache: 'maven' here - this job only runs help:evaluate, and its save would take the
+          # setup-java-Linux-x64-maven-<pom hash> key before Verify's Linux jobs, which then restore it and never save
 
       - id: version
         if: steps.has-pom.outputs.status == 'true'
