@@ -354,9 +354,17 @@ jobs:
         with:
           java-version: ${{ inputs.ff-jdk }}
           distribution: ${{ inputs.ff-jdk-distribution }}
-          cache: 'maven'
-          cache-read-only: ${{ needs.setup-maven-version.outputs.save-caches != 'true' }}
           show-download-progress: ${{ inputs.show-download-progress }}
+
+      - name: Restore the Maven repository
+        id: maven-repository
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.m2/repository
+          key: maven-repository-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('**/pom.xml') }}
+          # a build whose POMs differ starts from the newest saved repository instead of an empty one
+          restore-keys: |
+            maven-repository-${{ runner.os }}-${{ runner.arch }}-
 
       - name: Check the runner's Maven
         id: runner-maven
@@ -432,6 +440,13 @@ jobs:
       - name: Build Maven Site
         run: mvn --errors --batch-mode --show-version ${{ inputs.maven-args }} ${{ inputs.ff-site-goal }}
         if: inputs.ff-site-run
+
+      - name: Save the Maven repository
+        if: steps.maven-repository.outputs.cache-hit != 'true' && needs.setup-maven-version.outputs.save-caches == 'true'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.m2/repository
+          key: ${{ steps.maven-repository.outputs.cache-primary-key }}
 
       - name: Upload Maven Site
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
@@ -553,9 +568,18 @@ jobs:
         with:
           java-version: ${{ matrix.jdk }}
           distribution: ${{ matrix.distribution }}
-          cache: 'maven'
-          cache-read-only: ${{ needs.setup-maven-version.outputs.save-caches != 'true' }}
           show-download-progress: ${{ inputs.show-download-progress }}
+
+      - name: Restore the Maven repository
+        id: maven-repository
+        if: steps.should-run.conclusion == 'success'
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.m2/repository
+          key: maven-repository-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('**/pom.xml') }}
+          # a build whose POMs differ starts from the newest saved repository instead of an empty one
+          restore-keys: |
+            maven-repository-${{ runner.os }}-${{ runner.arch }}-
 
       - name: Check the runner's Maven
         id: runner-maven
@@ -629,6 +653,13 @@ jobs:
           # Maven 3 has no optional profiles: it reads "?run-its" as a profile of that name and leaves run-its off
           if [[ "$MAVEN_VERSION" == 3.* ]]; then GOAL="${GOAL//\?run-its/run-its}"; fi
           eval "mvn --errors --batch-mode --show-version $ARGS $GOAL"
+
+      - name: Save the Maven repository
+        if: steps.should-run.conclusion == 'success' && steps.maven-repository.outputs.cache-hit != 'true' && needs.setup-maven-version.outputs.save-caches == 'true'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.m2/repository
+          key: ${{ steps.maven-repository.outputs.cache-primary-key }}
 
       - name: Upload artifact on failure
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
