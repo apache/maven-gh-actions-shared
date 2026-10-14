@@ -222,8 +222,10 @@ on:
 
       cache-save-default-branch-only:
         description: >-
-          Save the Maven and JDK caches only on the default branch; other branches restore them.
-          By default every pushed branch saves except dependabot/ branches, and pull requests only restore.
+          Save the Maven and JDK caches only on the default branch.
+          By default the default branch and long-lived branches whose name ends in .x (such as maven-3.9.x) save;
+          every other branch and pull request only restores, since GitHub lets a branch read only its own,
+          the default branch's and its pull request base's caches.
         required: false
         default: false
         type: boolean
@@ -249,8 +251,29 @@ jobs:
       version: ${{ steps.version.outputs.version }}
       maven-matrix: ${{ steps.maven.outputs.matrix }}
       exclude-matrix: ${{ steps.exclude.outputs.matrix }}
+      save-caches: ${{ steps.cache-policy.outputs.save }}
 
     steps:
+      - id: cache-policy
+        name: decide whether this build saves caches
+        env:
+          DEFAULT_BRANCH_ONLY: ${{ inputs.cache-save-default-branch-only }}
+          EVENT: ${{ github.event_name }}
+          REF_NAME: ${{ github.ref_name }}
+          REF_TYPE: ${{ github.ref_type }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+        run: |
+          save=false
+          if [ "$EVENT" = push ] && [ "$REF_TYPE" = branch ]; then
+            if [ "$REF_NAME" = "$DEFAULT_BRANCH" ]; then
+              save=true
+            elif [ "$DEFAULT_BRANCH_ONLY" != true ] && [[ "$REF_NAME" == *.x ]]; then
+              save=true
+            fi
+          fi
+          echo "save=$save" >> "$GITHUB_OUTPUT"
+          echo "Save caches: $save"
+
       - id: version
         name: setup Maven version for ff
         run: |
@@ -323,8 +346,7 @@ jobs:
           java-version: ${{ inputs.ff-jdk-toolchain }}
           distribution: ${{ inputs.ff-jdk-distribution }}
           cache-jdk: true
-          # pull requests and dependabot/ branches restore caches without saving their own copies
-          cache-read-only: ${{ github.event_name == 'pull_request' || startsWith(github.ref_name, 'dependabot/') || (inputs.cache-save-default-branch-only && github.ref_name != github.event.repository.default_branch) }}
+          cache-read-only: ${{ needs.setup-maven-version.outputs.save-caches != 'true' }}
           show-download-progress: ${{ inputs.show-download-progress }}
 
       - name: Set up JDK
@@ -333,8 +355,7 @@ jobs:
           java-version: ${{ inputs.ff-jdk }}
           distribution: ${{ inputs.ff-jdk-distribution }}
           cache: 'maven'
-          # pull requests and dependabot/ branches restore caches without saving their own copies
-          cache-read-only: ${{ github.event_name == 'pull_request' || startsWith(github.ref_name, 'dependabot/') || (inputs.cache-save-default-branch-only && github.ref_name != github.event.repository.default_branch) }}
+          cache-read-only: ${{ needs.setup-maven-version.outputs.save-caches != 'true' }}
           show-download-progress: ${{ inputs.show-download-progress }}
 
       - name: Check the runner's Maven
@@ -381,8 +402,7 @@ jobs:
           rm "$archive"
 
       - name: Save Maven to the cache
-        # only the default branch saves; other branches and pull requests restore its entry
-        if: steps.runner-maven.outputs.matches != 'true' && steps.maven-cache.outputs.cache-hit != 'true' && github.ref_name == github.event.repository.default_branch
+        if: steps.runner-maven.outputs.matches != 'true' && steps.maven-cache.outputs.cache-hit != 'true' && needs.setup-maven-version.outputs.save-caches == 'true'
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.m2/dists/apache-maven-${{ needs.setup-maven-version.outputs.version }}
@@ -524,8 +544,7 @@ jobs:
           java-version: ${{ inputs.jdk-toolchain }}
           distribution: ${{ matrix.distribution }}
           cache-jdk: true
-          # pull requests and dependabot/ branches restore caches without saving their own copies
-          cache-read-only: ${{ github.event_name == 'pull_request' || startsWith(github.ref_name, 'dependabot/') || (inputs.cache-save-default-branch-only && github.ref_name != github.event.repository.default_branch) }}
+          cache-read-only: ${{ needs.setup-maven-version.outputs.save-caches != 'true' }}
           show-download-progress: ${{ inputs.show-download-progress }}
 
       - name: Set up JDK
@@ -535,8 +554,7 @@ jobs:
           java-version: ${{ matrix.jdk }}
           distribution: ${{ matrix.distribution }}
           cache: 'maven'
-          # pull requests and dependabot/ branches restore caches without saving their own copies
-          cache-read-only: ${{ github.event_name == 'pull_request' || startsWith(github.ref_name, 'dependabot/') || (inputs.cache-save-default-branch-only && github.ref_name != github.event.repository.default_branch) }}
+          cache-read-only: ${{ needs.setup-maven-version.outputs.save-caches != 'true' }}
           show-download-progress: ${{ inputs.show-download-progress }}
 
       - name: Check the runner's Maven
@@ -584,8 +602,7 @@ jobs:
           rm "$archive"
 
       - name: Save Maven to the cache
-        # only the default branch saves; other branches and pull requests restore its entry
-        if: steps.should-run.conclusion == 'success' && steps.runner-maven.outputs.matches != 'true' && steps.maven-cache.outputs.cache-hit != 'true' && github.ref_name == github.event.repository.default_branch
+        if: steps.should-run.conclusion == 'success' && steps.runner-maven.outputs.matches != 'true' && steps.maven-cache.outputs.cache-hit != 'true' && needs.setup-maven-version.outputs.save-caches == 'true'
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.m2/dists/apache-maven-${{ matrix.maven || needs.setup-maven-version.outputs.version }}
