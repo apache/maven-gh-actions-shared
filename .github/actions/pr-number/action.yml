@@ -1,0 +1,58 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+
+name: "PR number"
+description: "Find the pull request whose current head is the given commit"
+
+inputs:
+  head-sha:
+    description: "Commit the pull request head must point to"
+    required: true
+  state:
+    description: "Pull request state to search: open, closed, merged or all"
+    required: true
+  repository:
+    description: "Repository to search"
+    default: ${{ github.repository }}
+  token:
+    description: "Token used for the GitHub API"
+    default: ${{ github.token }}
+
+outputs:
+  number:
+    description: "Pull request number, empty when no pull request matches"
+    value: ${{ steps.pr.outputs.number }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Find the pull request
+      id: pr
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.token }}
+        REPO: ${{ inputs.repository }}
+        HEAD_SHA: ${{ inputs.head-sha }}
+        STATE: ${{ inputs.state }}
+      run: |
+        [[ "$HEAD_SHA" =~ ^[0-9a-f]{40}$ ]] || { echo "::error::bad head sha"; exit 1; }
+        [[ "$STATE" =~ ^(open|closed|merged|all)$ ]] || { echo "::error::bad state"; exit 1; }
+        PR=$(gh pr list -R "$REPO" --state "$STATE" --search "$HEAD_SHA" \
+               --json number,headRefOid \
+               --jq ".[] | select(.headRefOid == \"$HEAD_SHA\") | .number" | head -n1)
+        echo "PR number: ${PR:-<none>} for commit: $HEAD_SHA"
+        echo "number=$PR" >> "$GITHUB_OUTPUT"
