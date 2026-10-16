@@ -52,6 +52,7 @@ jobs:
     permissions:
       pull-requests: write
       issues: write # PR comments are "issue comments" in the API
+      statuses: write # commit status on the PR head for workflow_run
     runs-on: ubuntu-slim
     # Skip when no open pull request matches the commit of a workflow_run (a newer push triggers its own run).
     # A skipped job counts as successful, so a required check doesn't block the merge.
@@ -99,9 +100,26 @@ jobs:
             const { data: pr } = await github.rest.pulls.get({ owner, repo, pull_number: prNumber });
             core.info(`Author: ${pr.user.login}, type: ${pr.user.type}, author_association: ${pr.author_association}`);
 
+            // workflow_run runs on the default branch, so its own check is not shown on the PR.
+            // Report the result as a commit status on the PR head instead.
+            const setStatus = async (state, description) => {
+              if (context.eventName !== 'workflow_run') return;
+              try {
+                await github.rest.repos.createCommitStatus({
+                  owner, repo, sha: pr.head.sha, state, description,
+                  context: 'PR Check / license-declaration',
+                  target_url: `${context.serverUrl}/${owner}/${repo}/actions/runs/${context.runId}`,
+                });
+              } catch (err) {
+                core.warning(`Cannot set the commit status: ${err.message}`);
+              }
+            };
+            await setStatus('pending', 'Checking the license declaration');
+
             // Bots (Dependabot, Renovate, other GitHub Apps) don't need the declaration
             if (pr.user.type === 'Bot') {
               core.info(`✅ ${pr.user.login} is a bot - declaration not required.`);
+              await setStatus('success', 'Declaration not required from a bot');
               return;
             }
 
@@ -177,6 +195,7 @@ jobs:
               core.info(hasDeclaration ? '✅ PR description contains a checked license declaration.'
                 : isMember ? `✅ ${pr.user.login} is ${pr.author_association} - declaration not required.`
                 : `✅ ${pr.user.login} has write access to the repository - declaration not required.`);
+              await setStatus('success', hasDeclaration ? 'License declaration checked' : 'Declaration not required from a committer');
               return;
             }
 
@@ -216,4 +235,5 @@ jobs:
               }
             }
 
+            await setStatus('failure', 'License declaration missing');
             core.setFailed('❌ PR description does not contain a checked license declaration.');
