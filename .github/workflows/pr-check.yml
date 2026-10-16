@@ -25,33 +25,47 @@ on:
 permissions: {}
 
 jobs:
+  # Number of the pull request being checked: taken from the event for pull_request(_target),
+  # looked up from the head commit for workflow_run (whose pull_requests is empty for forks).
+  pr-number:
+    permissions:
+      pull-requests: read
+    runs-on: ubuntu-slim
+    outputs:
+      number: ${{ github.event.pull_request.number || steps.pr.outputs.number }}
+    steps:
+      - name: Find the pull request
+        id: pr
+        if: github.event_name == 'workflow_run'
+        uses: apache/maven-gh-actions-shared/.github/actions/pr-number@v5
+        with:
+          head-sha: ${{ github.event.workflow_run.head_sha }}
+          state: open
+
   # The PR description must contain at least one CHECKED Apache license declaration
   # ("- [x] I hereby declare ...").
   # - Missing       -> adds ONE comment and fails.
   # - Fixed         -> hides the comment as outdated and passes.
   # - Removed again -> unhides the same comment (no duplicates).
   license-declaration:
+    needs: pr-number
     permissions:
       pull-requests: write
       issues: write # PR comments are "issue comments" in the API
     runs-on: ubuntu-slim
-    # Skip (a skipped job counts as successful, so a required check doesn't block the merge):
-    # - PRs opened by bots (Dependabot, Renovate, other GitHub Apps),
-    # - PRs opened by members/committers of the organization owning the repository (apache).
-    #   MEMBER       = org member with public membership (PMC member)
-    #   OWNER        = org owner
-    #   COLLABORATOR = committer whose org membership is private (covers most Apache committers)
-    if: >-
-      github.event.pull_request.user.type != 'Bot' &&
-      !contains(fromJSON('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.pull_request.author_association)
+    # Skip when no open pull request matches the commit of a workflow_run (a newer push triggers its own run).
+    # A skipped job counts as successful, so a required check doesn't block the merge.
+    if: needs.pr-number.outputs.number != ''
     # Prevents races (e.g. opened + edited in quick succession => two comments).
     # Do NOT define the same concurrency group in the caller – it would deadlock.
     concurrency:
-      group: license-declaration-check-${{ github.repository }}-${{ github.event.pull_request.number }}
+      group: license-declaration-check-${{ github.repository }}-${{ needs.pr-number.outputs.number }}
       cancel-in-progress: false
     steps:
       - name: Check license declaration
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          PR_NUMBER: ${{ needs.pr-number.outputs.number }}
         with:
           script: |
             const MARKER = '<!-- license-declaration-check -->';
@@ -64,16 +78,11 @@ jobs:
 
             const { owner, repo } = context.repo;
 
-            // The workflow only makes sense for pull request events
-            const prNumber = context.payload.pull_request?.number;
+            const prNumber = Number(process.env.PR_NUMBER);
             if (!prNumber) {
-              core.setFailed(`This workflow must be called from pull_request or pull_request_target events (got "${context.eventName}").`);
+              core.setFailed(`This workflow must be called from pull_request, pull_request_target or workflow_run events (got "${context.eventName}").`);
               return;
             }
-
-            // Values used by the job condition, logged for diagnosis
-            const { user, author_association } = context.payload.pull_request;
-            core.info(`Author: ${user?.login}, type: ${user?.type}, author_association: ${author_association}`);
 
             // "- [x] <declaration>" or "* [X] <declaration>", one per line, optional indentation/trailing spaces.
             // Links may use either http:// or https://.
@@ -85,23 +94,39 @@ jobs:
               'm'
             );
 
-            // Fetch the current description from the API (the event payload may be stale on "Re-run jobs")
+            // Read the pull request from the API: the workflow_run payload doesn't contain it,
+            // and the pull_request payload may be stale on "Re-run jobs"
             const { data: pr } = await github.rest.pulls.get({ owner, repo, pull_number: prNumber });
+            core.info(`Author: ${pr.user.login}, type: ${pr.user.type}, author_association: ${pr.author_association}`);
+
+            // Bots (Dependabot, Renovate, other GitHub Apps) don't need the declaration
+            if (pr.user.type === 'Bot') {
+              core.info(`✅ ${pr.user.login} is a bot - declaration not required.`);
+              return;
+            }
+
             const hasDeclaration = regex.test(pr.body || '');
 
-            // Committers don't need the declaration.
-            // Note: private org members appear as CONTRIBUTOR in the event payload,
-            // so we check write access via the API instead of relying on author_association.
+            // Members/committers of the organization owning the repository (apache) don't need the declaration.
+            //   MEMBER       = org member with public membership (PMC member)
+            //   OWNER        = org owner
+            //   COLLABORATOR = committer whose org membership is private (covers most Apache committers)
+            const isMember = ['OWNER', 'MEMBER', 'COLLABORATOR'].includes(pr.author_association);
+
+            // Note: private org members may appear as CONTRIBUTOR,
+            // so we also check write access via the API instead of relying on author_association only.
             let hasWriteAccess = false;
-            try {
-              const { data: perm } = await github.rest.repos.getCollaboratorPermissionLevel({
-                owner, repo, username: pr.user.login,
-              });
-              hasWriteAccess = ['admin', 'maintain', 'write'].includes(perm.permission);
-              core.info(`Permission of ${pr.user.login}: ${perm.permission}`);
-            } catch (err) {
-              // Fall back to requiring the declaration - a committer's PR may then fail the check
-              core.warning(`Cannot read the permission of ${pr.user.login}: ${err.message}`);
+            if (!hasDeclaration && !isMember) {
+              try {
+                const { data: perm } = await github.rest.repos.getCollaboratorPermissionLevel({
+                  owner, repo, username: pr.user.login,
+                });
+                hasWriteAccess = ['admin', 'maintain', 'write'].includes(perm.permission);
+                core.info(`Permission of ${pr.user.login}: ${perm.permission}`);
+              } catch (err) {
+                // Fall back to requiring the declaration - a committer's PR may then fail the check
+                core.warning(`Cannot read the permission of ${pr.user.login}: ${err.message}`);
+              }
             }
 
             // Find our comment: author must be a bot and the comment must contain the marker.
@@ -132,7 +157,7 @@ jobs:
             }
 
             // ---------- Declaration OK ----------
-            if (hasDeclaration || hasWriteAccess) {
+            if (hasDeclaration || isMember || hasWriteAccess) {
               if (existing && !isMinimized) {
                 try {
                   await github.graphql(
@@ -149,8 +174,8 @@ jobs:
                   core.warning(`Cannot hide the existing comment: ${err.message}`);
                 }
               }
-              core.info(hasDeclaration
-                ? '✅ PR description contains a checked license declaration.'
+              core.info(hasDeclaration ? '✅ PR description contains a checked license declaration.'
+                : isMember ? `✅ ${pr.user.login} is ${pr.author_association} - declaration not required.`
                 : `✅ ${pr.user.login} has write access to the repository - declaration not required.`);
               return;
             }
