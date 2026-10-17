@@ -54,5 +54,5 @@ runs:
         PR=$(gh pr list -R "$REPO" --state "$STATE" --search "$HEAD_SHA" \
                --json number,headRefOid \
                --jq ".[] | select(.headRefOid == \"$HEAD_SHA\") | .number" | head -n1)
-        echo "PR number: ${PR:-<none>} for commit: $HEAD_SHA"
+        echo "::notice title=PR number::PR number: ${PR:-<none>} for commit: $HEAD_SHA"
         echo "number=$PR" >> "$GITHUB_OUTPUT"
