@@ -14,9 +14,9 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
-# Reusable workflow grouping the checks run against a pull request.
 
-# Workflow to signal events on PRs, workflow_run will consume the events
+# Reusable workflow signaling events on a pull request,
+# consumed by workflows triggered by workflow_run (e.g. PR Check).
 
 name: PR Signal
 
