@@ -16,11 +16,11 @@
 # under the License.
 
 name: "PR number"
-description: "Find the pull request whose current head is the given commit"
+description: "Find the pull request whose current head or merge commit is the given commit"
 
 inputs:
   head-sha:
-    description: "Commit the pull request head must point to"
+    description: "Commit the pull request head or merge commit must point to"
     required: true
   state:
     description: "Pull request state to search: open, closed, merged or all"
@@ -52,8 +52,8 @@ runs:
         [[ "$HEAD_SHA" =~ ^[0-9a-f]{40}$ ]] || { echo "::error::bad head sha"; exit 1; }
         [[ "$STATE" =~ ^(open|closed|merged|all)$ ]] || { echo "::error::bad state"; exit 1; }
         PR=$(gh pr list -R "$REPO" --state "$STATE" --search "$HEAD_SHA" \
-               --json number,headRefOid \
-               --jq ".[] | select(.headRefOid == \"$HEAD_SHA\") | .number" | head -n1)
+               --json number,headRefOid,mergeCommit \
+               --jq ".[] | select(.headRefOid == \"$HEAD_SHA\" or .mergeCommit.oid == \"$HEAD_SHA\") | .number" | head -n1)
         echo "PR number: ${PR:-<none>} for commit: $HEAD_SHA"
         if [[ -n "$PR" ]]; then
           echo "Pull request: [#$PR]($GITHUB_SERVER_URL/$REPO/pull/$PR) for commit: \`$HEAD_SHA\`" >> "$GITHUB_STEP_SUMMARY"
