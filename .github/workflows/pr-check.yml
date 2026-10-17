@@ -25,18 +25,24 @@ on:
 permissions: {}
 
 jobs:
-  # Number of the pull request being checked: taken from the event for pull_request(_target),
-  # looked up from the head commit for workflow_run (whose pull_requests is empty for forks).
+  # Number of the pull request being checked, looked up from the head commit of the workflow_run
+  # (its pull_requests is empty for forks).
   pr-number:
     permissions:
       pull-requests: read
     runs-on: ubuntu-slim
     outputs:
-      number: ${{ github.event.pull_request.number || steps.pr.outputs.number }}
+      number: ${{ steps.pr.outputs.number }}
     steps:
+      - name: Check the event
+        if: github.event_name != 'workflow_run'
+        run: |
+          echo "::error::This workflow must be called from workflow_run events (got \"$EVENT_NAME\")."
+          exit 1
+        env:
+          EVENT_NAME: ${{ github.event_name }}
       - name: Find the pull request
         id: pr
-        if: github.event_name == 'workflow_run'
         uses: apache/maven-gh-actions-shared/.github/actions/pr-number@v5
         with:
           head-sha: ${{ github.event.workflow_run.head_sha }}
@@ -52,7 +58,7 @@ jobs:
     permissions:
       pull-requests: write
       issues: write # PR comments are "issue comments" in the API
-      statuses: write # commit status on the PR head for workflow_run
+      statuses: write # commit status on the PR head
     runs-on: ubuntu-slim
     # Skip when no open pull request matches the commit of a workflow_run (a newer push triggers its own run).
     # A skipped job counts as successful, so a required check doesn't block the merge.
@@ -80,10 +86,6 @@ jobs:
             const { owner, repo } = context.repo;
 
             const prNumber = Number(process.env.PR_NUMBER);
-            if (!prNumber) {
-              core.setFailed(`This workflow must be called from pull_request, pull_request_target or workflow_run events (got "${context.eventName}").`);
-              return;
-            }
 
             // "- [x] <declaration>" or "* [X] <declaration>", one per line, optional indentation/trailing spaces.
             // Links may use either http:// or https://.
@@ -95,15 +97,13 @@ jobs:
               'm'
             );
 
-            // Read the pull request from the API: the workflow_run payload doesn't contain it,
-            // and the pull_request payload may be stale on "Re-run jobs"
+            // Read the pull request from the API: the workflow_run payload doesn't contain it
             const { data: pr } = await github.rest.pulls.get({ owner, repo, pull_number: prNumber });
             core.info(`Author: ${pr.user.login}, type: ${pr.user.type}, author_association: ${pr.author_association}`);
 
             // workflow_run runs on the default branch, so its own check is not shown on the PR.
             // Report the result as a commit status on the PR head instead.
             const setStatus = async (state, description) => {
-              if (context.eventName !== 'workflow_run') return;
               try {
                 await github.rest.repos.createCommitStatus({
                   owner, repo, sha: pr.head.sha, state, description,
