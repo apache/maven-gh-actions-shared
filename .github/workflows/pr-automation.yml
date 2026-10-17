@@ -28,14 +28,15 @@ concurrency:
 permissions: {}
 
 jobs:
-  # dump GitHub context only when the workflow is re runed,
+  # dump GitHub context only when the workflow is re-run with debug logging enabled,
   # can help investigate problems
+  # (runner.debug is not available in a job-level if)
   dump-github-context:
     runs-on: ubuntu-slim
-    if: github.run_attempt > 1
 
     steps:
-      - run: echo "ok"
+      - if: runner.debug == '1'
+        run: echo "ok"
         env:
           GITHUB_CONTEXT: ${{ toJson(github) }}
         shell: bash
