@@ -343,9 +343,60 @@ branch: <branch name>
 
 This identifies the default for that branch.
 
-# PR check
+# PR Check
 
-We need an action in project referencing [shared `pr-check.yml@v5`](https://github.com/apache/maven-gh-actions-shared/blob/v5/.github/workflows/pr-check.yml):
+From November 2026 the `pull_request_target` event is disabled for ASF repositories,
+see [ASF GitHub Actions Policy](https://infra.apache.org/github-actions-policy.html).
+PR Check is therefore triggered by `workflow_run` after a `PR Signal` workflow,
+which runs on `pull_request` events and only signals that something changed in a PR.
+
+We need two actions in project.
+
+The first one referencing [shared `pr-signal.yml@v5`](https://github.com/apache/maven-gh-actions-shared/blob/v5/.github/workflows/pr-signal.yml):
+
+```
+.github/workflows/pr-signal.yml
+```
+
+with content:
+
+```yaml
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+
+# signal events on PR, will be used by other workflows to trigger actions on PR
+# by the workflow_run
+
+name: PR Signal
+
+on:
+  pull_request:
+    types:
+      - edited
+      - opened
+      - reopened
+      - synchronize
+
+jobs:
+  pr-signal:
+    uses: apache/maven-gh-actions-shared/.github/workflows/pr-signal.yml@v5
+```
+
+The second one referencing [shared `pr-check.yml@v5`](https://github.com/apache/maven-gh-actions-shared/blob/v5/.github/workflows/pr-check.yml):
 
 ```
 .github/workflows/pr-check.yml
@@ -371,19 +422,35 @@ with content:
 # specific language governing permissions and limitations
 # under the License.
 
-name: PR check
+name: PR Check
 
 on:
-  pull_request_target:
-    types: [opened, edited, reopened, synchronize]
+  workflow_run:
+    workflows: [PR Signal]
+    types: [completed]
 
 jobs:
   pr-check:
     uses: apache/maven-gh-actions-shared/.github/workflows/pr-check.yml@v5
 ```
 
-We need to use the `pull_request_target` event because we need `GITHUB_TOKEN` with write permission
+The `workflows` list must match the `name` of the `PR Signal` workflow.
+
+The `PR Check` workflow is always taken from the default branch,
+but the `PR Signal` workflow is taken from the PR, so it must be present on each branch PRs are opened against.
+The `workflow_run` event gives `GITHUB_TOKEN` with write permission
 to comment on PRs from forked repositories. The workflow never checks out PR code.
+
+A `workflow_run` workflow runs on the default branch, so its own checks are not shown on the PR.
+The result is reported as a commit status on the PR head instead, named `PR Check / <job>`,
+e.g. `PR Check / license-declaration`.
+The status links to the `PR Check` run, its summary links back to the checked PR.
+
+In ASF repositories workflows of PRs from external contributors must be approved by a committer,
+so `PR Check` is not run and the commit status is not reported until the `PR Signal` workflow is approved.
+
+The check is run again after editing the PR description or pushing new commits,
+or by re-running the `PR Check` run. A re-run of `PR Signal` also dumps the GitHub context to help investigate problems.
 
 ## Jobs
 
@@ -400,8 +467,9 @@ The PR description must contain at least one checked Apache license declaration:
 - when the description is fixed - the comment is hidden as outdated
 - when declaration is removed again - the same comment is restored, never a duplicate
 
-The check is skipped for PRs opened by bots
-and by `OWNER` / `MEMBER` of the organization owning the repository.
+The declaration is not required for PRs opened by bots,
+by `OWNER` / `MEMBER` / `COLLABORATOR` of the repository
+and by users with write access to the repository.
 
 # Labels synchronization
 
