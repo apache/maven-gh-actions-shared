@@ -40,21 +40,86 @@ jobs:
           GITHUB_CONTEXT: ${{ toJson(github) }}
         shell: bash
 
+  # Pull request being processed: taken from the event for pull_request_target (closed),
+  # looked up from the merge commit for push.
+  pr:
+    permissions:
+      pull-requests: read
+    if: github.event_name == 'push' || github.event.action == 'closed'
+    runs-on: ubuntu-slim
+    outputs:
+      number: ${{ steps.pr.outputs.number }}
+      merged: ${{ steps.pr.outputs.merged }}
+      merged-by: ${{ steps.pr.outputs.merged-by }}
+      base: ${{ steps.pr.outputs.base }}
+      milestone: ${{ steps.pr.outputs.milestone }}
+      labels: ${{ steps.pr.outputs.labels }}
+      skip-changelog: ${{ steps.pr.outputs.skip-changelog }}
+      assignees: ${{ steps.pr.outputs.assignees }}
+    steps:
+      - name: Find the pull request
+        id: pr-number
+        if: github.event_name == 'push'
+        uses: apache/maven-gh-actions-shared/.github/actions/pr-number@v5
+        with:
+          head-sha: ${{ github.sha }}
+          state: merged
+
+      - name: Read the pull request
+        id: pr
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number || steps.pr-number.outputs.number }}
+        with:
+          script: |
+            const prNumber = Number(process.env.PR_NUMBER);
+            if (!prNumber) {
+              core.info('No pull request found - nothing to do.');
+              return;
+            }
+
+            const { data: pr } = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: prNumber
+            });
+
+            const labels = pr.labels.map(label => label.name);
+            const outputs = {
+              'number': prNumber,
+              'merged': pr.merged,
+              'merged-by': pr.merged_by?.login ?? '',
+              'base': pr.base.ref,
+              'milestone': pr.milestone?.title ?? '',
+              'labels': labels.join(','),
+              'skip-changelog': labels.includes('skip-changelog'),
+              'assignees': pr.assignees.map(assignee => assignee.login).join(','),
+            };
+            for (const [name, value] of Object.entries(outputs)) {
+              core.info(`${name}: ${value}`);
+              core.setOutput(name, value);
+            }
+
   # check PR milestone - if not set - update with current opened milestone
   milestone:
     permissions:
       issues: write
       pull-requests: write
 
+    needs: pr
     if: >
-      github.event.action == 'closed' &&
-      github.event.pull_request.merged  &&
-      !github.event.pull_request.milestone &&
-      !contains(github.event.pull_request.labels.*.name, 'skip-changelog')
+      needs.pr.outputs.number != '' &&
+      needs.pr.outputs.merged == 'true' &&
+      needs.pr.outputs.milestone == '' &&
+      needs.pr.outputs.skip-changelog != 'true'
     runs-on: ubuntu-slim
     steps:
       - name: Update milestone
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          PR_NUMBER: ${{ needs.pr.outputs.number }}
+          MERGED_BY: ${{ needs.pr.outputs.merged-by }}
+          BASE: ${{ needs.pr.outputs.base }}
         with:
           script: |
             const milestones = await github.rest.issues.listMilestones({
@@ -64,14 +129,14 @@ jobs:
             });
 
             console.log(milestones);
-            const branch = context.payload.pull_request.base.ref
+            const branch = process.env.BASE
 
             if (milestones.data.length == 0) {
               await github.rest.issues.createComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                issue_number: context.issue.number,
-                body: '@' + context.payload.pull_request.merged_by.login +
+                issue_number: Number(process.env.PR_NUMBER),
+                body: '@' + process.env.MERGED_BY +
                 ' The PR can\'t be associated to a milestone, because there is no open milestone. Please create a new milestone before merge.'
               });
               throw new Error('The PR can\'t be associated to a milestone, because there is no open milestone. Please create a new milestone before merge.')
@@ -84,8 +149,8 @@ jobs:
                 await github.rest.issues.createComment({
                   owner: context.repo.owner,
                   repo: context.repo.repo,
-                  issue_number: context.issue.number,
-                  body: '@' + context.payload.pull_request.merged_by.login +
+                  issue_number: Number(process.env.PR_NUMBER),
+                  body: '@' + process.env.MERGED_BY +
                   ' The PR can\'t be associated to a milestone, because there are multiple open milestones. Please add the text "branch: ' + branch + '" to the description to the milestone where this PR belongs to.'
                 });
                 throw new Error('The PR can\'t be associated to a milestone, because there are multiple open milestones. Please add the text "branch: ' + branch + '" to the description to the milestone where this PR belongs to.');
@@ -99,7 +164,7 @@ jobs:
             const result = await github.rest.issues.update({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              issue_number: context.issue.number,
+              issue_number: Number(process.env.PR_NUMBER),
               milestone: milestone.number
             });
 
@@ -109,21 +174,24 @@ jobs:
       issues: write
       pull-requests: write
 
+    needs: pr
     if: >
-      github.event.action == 'closed' &&
-      (!github.event.pull_request.merged || contains(github.event.pull_request.labels.*.name, 'skip-changelog')) &&
-      github.event.pull_request.milestone
+      needs.pr.outputs.number != '' &&
+      (needs.pr.outputs.merged != 'true' || needs.pr.outputs.skip-changelog == 'true') &&
+      needs.pr.outputs.milestone != ''
     runs-on: ubuntu-slim
     steps:
       - name: Remove milestone
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          PR_NUMBER: ${{ needs.pr.outputs.number }}
         with:
           script: |
 
             const result = await github.rest.issues.update({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              issue_number: context.issue.number,
+              issue_number: Number(process.env.PR_NUMBER),
               milestone: null
             });
 
@@ -134,21 +202,25 @@ jobs:
       issues: write
       pull-requests: write
 
+    needs: pr
     if: >
-      github.event.action == 'closed' &&
-      github.event.pull_request.merged &&
-      toJSON(github.event.pull_request.labels) == '[]'
+      needs.pr.outputs.number != '' &&
+      needs.pr.outputs.merged == 'true' &&
+      needs.pr.outputs.labels == ''
     runs-on: ubuntu-slim
     steps:
       - name: Comment PR
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          PR_NUMBER: ${{ needs.pr.outputs.number }}
+          MERGED_BY: ${{ needs.pr.outputs.merged-by }}
         with:
           script: |
 
             const issue = await github.rest.issues.get({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              issue_number: context.issue.number
+              issue_number: Number(process.env.PR_NUMBER)
             });
             
             if (issue.data.labels.length > 0) {          
@@ -159,8 +231,8 @@ jobs:
             await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              issue_number: context.issue.number,
-              body: '@' + context.payload.pull_request.merged_by.login +
+              issue_number: Number(process.env.PR_NUMBER),
+              body: '@' + process.env.MERGED_BY +
               ' Please assign appropriate label to PR according to the type of change.'
             });
 
@@ -172,22 +244,26 @@ jobs:
       issues: write
       pull-requests: write
 
+    needs: pr
     if: >
-      github.event.action == 'closed' &&
-      github.event.pull_request.merged &&
-      toJSON(github.event.pull_request.assignees) == '[]'
+      needs.pr.outputs.number != '' &&
+      needs.pr.outputs.merged == 'true' &&
+      needs.pr.outputs.assignees == ''
     runs-on: ubuntu-slim
     steps:
 
       - name: Assign PR
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          PR_NUMBER: ${{ needs.pr.outputs.number }}
+          MERGED_BY: ${{ needs.pr.outputs.merged-by }}
         with:
           script: |
 
             const issue = await github.rest.issues.get({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              issue_number: context.issue.number
+              issue_number: Number(process.env.PR_NUMBER)
             });
             
             if (issue.data.assignees.length > 0) {
@@ -198,7 +274,7 @@ jobs:
             const result = await github.rest.issues.update({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              issue_number: context.issue.number,
-              assignees: [ context.payload.pull_request.merged_by.login ]
+              issue_number: Number(process.env.PR_NUMBER),
+              assignees: [ process.env.MERGED_BY ]
             });
 
