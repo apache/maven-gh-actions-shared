@@ -54,5 +54,10 @@ runs:
         PR=$(gh pr list -R "$REPO" --state "$STATE" --search "$HEAD_SHA" \
                --json number,headRefOid \
                --jq ".[] | select(.headRefOid == \"$HEAD_SHA\") | .number" | head -n1)
-        echo "::notice title=PR number::PR number: ${PR:-<none>} for commit: $HEAD_SHA"
+        echo "PR number: ${PR:-<none>} for commit: $HEAD_SHA"
+        if [[ -n "$PR" ]]; then
+          echo "Pull request: [#$PR]($GITHUB_SERVER_URL/$REPO/pull/$PR) for commit: \`$HEAD_SHA\`" >> "$GITHUB_STEP_SUMMARY"
+        else
+          echo "Pull request: none for commit: \`$HEAD_SHA\`" >> "$GITHUB_STEP_SUMMARY"
+        fi
         echo "number=$PR" >> "$GITHUB_OUTPUT"
