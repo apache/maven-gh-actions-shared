@@ -28,19 +28,6 @@ concurrency:
 permissions: {}
 
 jobs:
-  # dump GitHub context only when the workflow is re-run with debug logging enabled,
-  # can help investigate problems
-  # (runner.debug is not available in a job-level if)
-  dump-github-context:
-    runs-on: ubuntu-slim
-
-    steps:
-      - if: runner.debug == '1'
-        run: echo "ok"
-        env:
-          GITHUB_CONTEXT: ${{ toJson(github) }}
-        shell: bash
-
   # Pull request being processed: taken from the event for pull_request_target (closed),
   # looked up from the merge commit for push.
   pr:
@@ -58,6 +45,15 @@ jobs:
       skip-changelog: ${{ steps.pr.outputs.skip-changelog }}
       assignees: ${{ steps.pr.outputs.assignees }}
     steps:
+      # dump GitHub context only when the workflow is re-run with debug logging enabled,
+      # can help investigate problems
+      - name: Dump GitHub context
+        if: runner.debug == '1'
+        run: echo "ok"
+        env:
+          GITHUB_CONTEXT: ${{ toJson(github) }}
+        shell: bash
+
       - name: Find the pull request
         id: pr-number
         if: github.event_name == 'push'
