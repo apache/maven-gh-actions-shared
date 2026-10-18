@@ -220,6 +220,15 @@ on:
         default: false
         type: boolean
 
+      cache-jdk:
+        description: >-
+          Cache the toolchain JDKs in the Actions cache. Each JDK takes about 175-200 MB per OS and version,
+          enough with several distributions to fill the repository's 10 GB cache budget in one build
+          and evict the Maven repository cache; downloading a JDK costs a few seconds.
+        required: false
+        default: false
+        type: boolean
+
       cache-save-default-branch-only:
         description: >-
           Save the Maven and JDK caches only on the default branch.
@@ -345,7 +354,7 @@ jobs:
         with:
           java-version: ${{ inputs.ff-jdk-toolchain }}
           distribution: ${{ inputs.ff-jdk-distribution }}
-          cache-jdk: true
+          cache-jdk: ${{ inputs.cache-jdk }}
           cache-read-only: ${{ needs.setup-maven-version.outputs.save-caches != 'true' }}
           show-download-progress: ${{ inputs.show-download-progress }}
 
@@ -558,7 +567,7 @@ jobs:
         with:
           java-version: ${{ inputs.jdk-toolchain }}
           distribution: ${{ matrix.distribution }}
-          cache-jdk: true
+          cache-jdk: ${{ inputs.cache-jdk }}
           cache-read-only: ${{ needs.setup-maven-version.outputs.save-caches != 'true' }}
           show-download-progress: ${{ inputs.show-download-progress }}
 
