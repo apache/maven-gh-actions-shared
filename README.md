@@ -459,7 +459,7 @@ In ASF repositories workflows of PRs from external contributors must be approved
 so `PR Check` is not run and the commit status is not reported until the `PR Signal` workflow is approved.
 
 The check is run again after editing the PR description or pushing new commits,
-or by re-running the `PR Check` run. A re-run of `PR Signal` also dumps the GitHub context to help investigate problems.
+or by re-running the `PR Check` run. A re-run of `PR Signal` with debug logging enabled also dumps the GitHub context to help investigate problems.
 
 ## Jobs
 
