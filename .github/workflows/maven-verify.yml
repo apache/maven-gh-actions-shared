@@ -349,7 +349,7 @@ jobs:
           fetch-depth: ${{ inputs.fetch-depth }}
 
       - name: Set up JDKs for Toolchain
-        uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
         if: inputs.ff-jdk-toolchain != ''
         with:
           java-version: ${{ inputs.ff-jdk-toolchain }}
@@ -359,7 +359,7 @@ jobs:
           show-download-progress: ${{ inputs.show-download-progress }}
 
       - name: Set up JDK
-        uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
         with:
           java-version: ${{ inputs.ff-jdk }}
           distribution: ${{ inputs.ff-jdk-distribution }}
@@ -563,7 +563,7 @@ jobs:
 
       - name: Set up JDKs for Toolchain
         if: steps.should-run.conclusion == 'success' && inputs.jdk-toolchain != ''
-        uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
         with:
           java-version: ${{ inputs.jdk-toolchain }}
           distribution: ${{ matrix.distribution }}
@@ -573,7 +573,7 @@ jobs:
 
       - name: Set up JDK
         if: steps.should-run.conclusion == 'success'
-        uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
         with:
           java-version: ${{ matrix.jdk }}
           distribution: ${{ matrix.distribution }}
