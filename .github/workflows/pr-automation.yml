@@ -19,12 +19,6 @@ name: PR Automation
 on:
   workflow_call:
 
-# allow single build per PR for pull_request_target,
-# push gets a unique group per commit - so no concurrency limit
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.event.number || github.sha }}
-  cancel-in-progress: false
-
 # clare all permissions for GITHUB_TOKEN
 permissions: {}
 
