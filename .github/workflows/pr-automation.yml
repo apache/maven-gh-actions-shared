@@ -23,16 +23,14 @@ on:
 permissions: {}
 
 jobs:
-  # Pull request being processed: taken from the event for pull_request_target (closed),
-  # looked up from the merge commit for push.
+  # Pull request being processed: looked up from the merge commit of the push.
   pr:
     permissions:
       pull-requests: read
-    if: github.event_name == 'push' || github.event.action == 'closed'
+    if: github.event_name == 'push'
     runs-on: ubuntu-slim
     outputs:
       number: ${{ steps.pr.outputs.number }}
-      merged: ${{ steps.pr.outputs.merged }}
       merged-by: ${{ steps.pr.outputs.merged-by }}
       base: ${{ steps.pr.outputs.base }}
       milestone: ${{ steps.pr.outputs.milestone }}
@@ -51,7 +49,6 @@ jobs:
 
       - name: Find the pull request
         id: pr-number
-        if: github.event_name == 'push'
         uses: apache/maven-gh-actions-shared/.github/actions/pr-number@v5
         with:
           head-sha: ${{ github.sha }}
@@ -61,7 +58,7 @@ jobs:
         id: pr
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
-          PR_NUMBER: ${{ github.event.pull_request.number || steps.pr-number.outputs.number }}
+          PR_NUMBER: ${{ steps.pr-number.outputs.number }}
         with:
           script: |
             const prNumber = Number(process.env.PR_NUMBER);
@@ -79,7 +76,6 @@ jobs:
             const labels = pr.labels.map(label => label.name);
             const outputs = {
               'number': prNumber,
-              'merged': pr.merged,
               'merged-by': pr.merged_by?.login ?? '',
               'base': pr.base.ref,
               'milestone': pr.milestone?.title ?? '',
@@ -101,7 +97,6 @@ jobs:
     needs: pr
     if: >
       needs.pr.outputs.number != '' &&
-      needs.pr.outputs.merged == 'true' &&
       needs.pr.outputs.milestone == '' &&
       needs.pr.outputs.skip-changelog != 'true'
     runs-on: ubuntu-slim
@@ -160,7 +155,7 @@ jobs:
               milestone: milestone.number
             });
 
-  # check PR milestone - remove for not merged PR or with skip-changelog label
+  # check PR milestone - remove for PR with skip-changelog label
   milestone-rm:
     permissions:
       issues: write
@@ -169,7 +164,7 @@ jobs:
     needs: pr
     if: >
       needs.pr.outputs.number != '' &&
-      (needs.pr.outputs.merged != 'true' || needs.pr.outputs.skip-changelog == 'true') &&
+      needs.pr.outputs.skip-changelog == 'true' &&
       needs.pr.outputs.milestone != ''
     runs-on: ubuntu-slim
     steps:
@@ -197,7 +192,6 @@ jobs:
     needs: pr
     if: >
       needs.pr.outputs.number != '' &&
-      needs.pr.outputs.merged == 'true' &&
       needs.pr.outputs.labels == ''
     runs-on: ubuntu-slim
     steps:
@@ -239,7 +233,6 @@ jobs:
     needs: pr
     if: >
       needs.pr.outputs.number != '' &&
-      needs.pr.outputs.merged == 'true' &&
       needs.pr.outputs.assignees == ''
     runs-on: ubuntu-slim
     steps:
