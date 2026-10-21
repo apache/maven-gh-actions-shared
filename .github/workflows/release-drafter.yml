@@ -39,7 +39,7 @@ permissions: {}
 jobs:
   detect-version:
     name: Detect version
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     outputs:
       version: ${{ steps.version.outputs.version }}
 
