@@ -311,9 +311,9 @@ with content:
 
 name: PR Automation
 on:
-  pull_request_target:
-    types:
-      - closed
+  push:
+    branches:
+      - master
 
 jobs:
   pr-automation:
@@ -322,15 +322,24 @@ jobs:
 
 ```
 
-We need to use the `pull_request_target` event because we need `GITHUB_TOKEN` with write permission
-to update labels and milestones of PRs from forked repositories.
+From November 2026 the `pull_request_target` event is disabled for ASF repositories,
+see [ASF GitHub Actions Policy](https://infra.apache.org/github-actions-policy.html).
+PR Automation is therefore triggered by `push` to the branch the PR was merged into,
+the merged PR is found by the pushed commit.
+
+The workflow is taken from the pushed branch, so it must be present on each branch PRs are merged into,
+with that branch in the `branches` list.
 
 After the PR got merged each of the following actions are checked and applied if not already set:
 - current milestone will be set unless PR has `skip-changelog` label
 - will be assigned to person who merged PR
+- a comment is added and the workflow fails when PR has no label
 
-After the PR got closed without merge or has `skip-changelog` label
--  current milestone will be removed if was set
+When PR has `skip-changelog` label
+- current milestone will be removed if was set
+
+A PR closed without merge produces no push, so its milestone is not removed.
+A PR merged with `[ci skip]` in the commit message is not processed either.
 
 ## milestone configuration
 
@@ -450,7 +459,7 @@ In ASF repositories workflows of PRs from external contributors must be approved
 so `PR Check` is not run and the commit status is not reported until the `PR Signal` workflow is approved.
 
 The check is run again after editing the PR description or pushing new commits,
-or by re-running the `PR Check` run. A re-run of `PR Signal` also dumps the GitHub context to help investigate problems.
+or by re-running the `PR Check` run. A re-run of `PR Signal` with debug logging enabled also dumps the GitHub context to help investigate problems.
 
 ## Jobs
 
