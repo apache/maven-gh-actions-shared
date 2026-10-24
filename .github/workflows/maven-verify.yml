@@ -312,11 +312,15 @@ jobs:
 
       - id: exclude
         name: setup exclude matrix
+        env:
+          JDK_MATRIX: ${{ inputs.jdk-matrix }}
         run: |
           {
             echo 'matrix<<EOF'
             if [ "${{ inputs.maven4-enabled }}" = "true" -o "${{ inputs.maven4-build }}" = "true" ]; then
-              echo '${{ inputs.matrix-exclude }}' | jq -c '. + [{"jdk": "8", "maven": "${{ inputs.maven4-version }}"}]'
+              # Maven 4 runs on Java 17 or newer: drop its cells for every JDK below 17 in jdk-matrix, and for 8
+              echo '${{ inputs.matrix-exclude }}' | jq -c --argjson jdks "$JDK_MATRIX" \
+                '. + [($jdks + ["8"]) | unique | .[] | select((tostring | split(".")[0] | tonumber) < 17) | {"jdk": ., "maven": "${{ inputs.maven4-version }}"}]'
             else
               echo '${{ inputs.matrix-exclude }}'
             fi
