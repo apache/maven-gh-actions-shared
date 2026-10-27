@@ -534,6 +534,7 @@ jobs:
         uses: apache/maven-gh-actions-shared/.github/actions/install-svn@v5
 
       - name: Install GnuPG
+        id: install-gpg
         if: >
           inputs.install-gpg &&
           steps.should-run.conclusion == 'success' &&
@@ -543,15 +544,24 @@ jobs:
           [Environment]::SetEnvironmentVariable("Path", $env:PATH, "Machine")
           choco install --yes gpg4win
           # Gpg4win 4.x (32-bit) deploys GnuPG under "Program Files (x86)", 5.x+ (64-bit) under "Program Files"
-          "C:\Program Files\GnuPG\bin", "C:\Program Files (x86)\GnuPG\bin" |
+          $bin = "C:\Program Files\GnuPG\bin", "C:\Program Files (x86)\GnuPG\bin" |
             Where-Object { Test-Path $_ } |
-            Add-Content $env:GITHUB_PATH
+            Select-Object -First 1
+          Add-Content $env:GITHUB_PATH $bin
+          # Git Bash puts its own /usr/bin first in PATH, so bash steps must put Gpg4win before it again
+          Add-Content $env:GITHUB_OUTPUT "bin=$bin"
 
       - name: Check GnuPG
         if: >
           inputs.install-gpg &&
           steps.should-run.conclusion == 'success'
-        run: gpg --version
+        shell: bash
+        env:
+          GPG_BIN: ${{ steps.install-gpg.outputs.bin }}
+        run: |
+          if [ -n "$GPG_BIN" ]; then PATH="$(cygpath --unix "$GPG_BIN"):$PATH"; fi
+          command -v gpg
+          gpg --version
 
       - name: Show free disk space
         if: steps.should-run.conclusion == 'success'
@@ -662,7 +672,10 @@ jobs:
           MAVEN_VERSION: ${{ matrix.maven || needs.setup-maven-version.outputs.version }}
           ARGS: ${{ inputs.maven-args }}
           GOAL: ${{ inputs.verify-goal }}
+          GPG_BIN: ${{ steps.install-gpg.outputs.bin }}
         run: |
+          # Use Gpg4win rather than the MSYS gpg of Git for Windows, which does not understand Windows paths
+          if [ -n "$GPG_BIN" ]; then PATH="$(cygpath --unix "$GPG_BIN"):$PATH"; fi
           # Maven 3 has no optional profiles: it reads "?run-its" as a profile of that name and leaves run-its off
           if [[ "$MAVEN_VERSION" == 3.* ]]; then GOAL="${GOAL//\?run-its/run-its}"; fi
           eval "mvn --errors --batch-mode --show-version $ARGS $GOAL"
