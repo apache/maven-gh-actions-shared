@@ -50,7 +50,7 @@ jobs:
         run: |
           {
             echo 'matrix<<EOF'          
-            curl -s https://gitbox.apache.org/repositories.json | jq '.projects.maven.repositories | to_entries | sort_by(.key) | .[] | select(.value.description | contains("archived") | not) | .key' | jq -sc
+            curl -s https://gitbox.apache.org/repositories.json | jq '.projects.maven.repositories | to_entries | sort_by(.key) | .[] | select(.value.nocommit != true) | .key' | jq -sc
             echo 'EOF'
           } >> "$GITHUB_OUTPUT"
           
