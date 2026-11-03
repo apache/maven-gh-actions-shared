@@ -92,16 +92,17 @@ jobs:
             console.log('Labels to update:');
             console.log(labels);
             
-            const currentLabels = await github.rest.issues.listLabelsForRepo({
+            const currentLabels = await github.paginate(github.rest.issues.listLabelsForRepo, {
                 owner: process.env.OWNER,
-                repo: process.env.REPO
+                repo: process.env.REPO,
+                per_page: 100
               });
             
             console.log('Current project labels:');
-            console.log(currentLabels.data);
+            console.log(currentLabels);
           
             for (const label of labels) {
-              const currentLabel = currentLabels.data.find(({name}) => name == label.name);
+              const currentLabel = currentLabels.find(({name}) => name == label.name);
 
               console.log('Label:');
               console.log(label);
