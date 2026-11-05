@@ -91,7 +91,7 @@ on:
         type: string
 
       reduced-os-matrix:
-        description: 'Run every JDK on Linux, the newest JDK on macOS, and the oldest and newest on Windows (default: true)'
+        description: 'Run the newest JDK only on macOS and the oldest and newest only on Windows; every other OS runs every JDK (default: true)'
         required: false
         default: true
         type: boolean
