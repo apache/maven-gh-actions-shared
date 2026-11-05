@@ -90,6 +90,12 @@ on:
         default: '[]'
         type: string
 
+      reduced-os-matrix:
+        description: 'Run the newest JDK only on macOS and the oldest and newest only on Windows; every other OS runs every JDK (default: true)'
+        required: false
+        default: true
+        type: boolean
+
       matrix-enabled:
         description: Determinate if use matrix build
         required: false
@@ -314,16 +320,27 @@ jobs:
         name: setup exclude matrix
         env:
           JDK_MATRIX: ${{ inputs.jdk-matrix }}
+          OS_MATRIX: ${{ inputs.os-matrix }}
+          MATRIX_EXCLUDE: ${{ inputs.matrix-exclude }}
         run: |
+          exclude="$MATRIX_EXCLUDE"
+          if [ "${{ inputs.maven4-enabled }}" = "true" -o "${{ inputs.maven4-build }}" = "true" ]; then
+            # Maven 4 runs on Java 17 or newer: drop its cells for every JDK below 17 in jdk-matrix, and for 8
+            exclude=$(echo "$exclude" | jq -c --argjson jdks "$JDK_MATRIX" \
+              '. + [($jdks + ["8"]) | unique | .[] | select((tostring | split(".")[0] | tonumber) < 17) | {"jdk": ., "maven": "${{ inputs.maven4-version }}"}]')
+          fi
+          if [ "${{ inputs.reduced-os-matrix }}" = "true" ]; then
+            # every JDK on Linux; only the newest on macOS, only the oldest and newest on Windows
+            exclude=$(echo "$exclude" | jq -c --argjson jdks "$JDK_MATRIX" --argjson oses "$OS_MATRIX" \
+              '($jdks | sort_by(tostring | split(".") | map(tonumber))) as $s
+               | . + [$oses[] as $os | $s[] as $j
+                      | select((($os | startswith("macos")) and $j != $s[-1])
+                               or (($os | startswith("windows")) and $j != $s[0] and $j != $s[-1]))
+                      | {"os": $os, "jdk": $j}]')
+          fi
           {
             echo 'matrix<<EOF'
-            if [ "${{ inputs.maven4-enabled }}" = "true" -o "${{ inputs.maven4-build }}" = "true" ]; then
-              # Maven 4 runs on Java 17 or newer: drop its cells for every JDK below 17 in jdk-matrix, and for 8
-              echo '${{ inputs.matrix-exclude }}' | jq -c --argjson jdks "$JDK_MATRIX" \
-                '. + [($jdks + ["8"]) | unique | .[] | select((tostring | split(".")[0] | tonumber) < 17) | {"jdk": ., "maven": "${{ inputs.maven4-version }}"}]'
-            else
-              echo '${{ inputs.matrix-exclude }}'
-            fi
+            echo "$exclude"
             echo 'EOF'
           } >> "$GITHUB_OUTPUT"
 
