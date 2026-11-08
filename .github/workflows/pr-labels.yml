@@ -1,0 +1,196 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+
+# Reusable workflow that assigns labels to a pull request on open/reopen.
+# Labels are assigned in two passes:
+#   1. Deterministic: version label (mvn3/mvn40/mvn4) from the base branch name.
+#   2. LLM-assisted:  type label (bug/enhancement/maintenance/documentation/…)
+#      and backport signals (backport-to-4.0.x / backport-to-3.10.x) inferred
+#      from the PR title and description via llm.apache.org (OpenAI-compatible).
+#      Requires the LLMAO_TOKEN secret to be set; skipped gracefully if absent.
+
+name: PR Labels
+
+on:
+  workflow_call:
+    inputs:
+      llmao-model:
+        description: |
+          Model ID to use on llm.apache.org.
+          Defaults to gpt-4o-mini which is well suited for structured classification.
+        required: false
+        type: string
+        default: 'gpt-4o-mini'
+    secrets:
+      LLMAO_TOKEN:
+        description: |
+          Personal access token for llm.apache.org (https://llm.apache.org).
+          Create one at llm.apache.org after signing in with your ASF account.
+          If not provided, only the deterministic version label is applied.
+        required: false
+
+# All permissions are declared per-job.
+permissions: {}
+
+jobs:
+  assign-labels:
+    name: Assign labels
+    runs-on: ubuntu-slim
+    permissions:
+      pull-requests: write
+      issues: write        # label writes go through the issues API
+    # Skip bots (Dependabot, Renovate, …)
+    if: github.event.pull_request.user.type != 'Bot'
+    # Prevent races when opened + synchronize fire together
+    concurrency:
+      group: pr-labels-${{ github.repository }}-${{ github.event.pull_request.number }}
+      cancel-in-progress: false
+    steps:
+      - name: Assign labels
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          LLMAO_TOKEN: ${{ secrets.LLMAO_TOKEN }}
+          LLMAO_MODEL: ${{ inputs.llmao-model }}
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const pr = context.payload.pull_request;
+            const prNumber = pr.number;
+            const base = pr.base.ref;
+
+            // ── 1. Deterministic: version label from base branch ──────────────────
+            const VERSION_LABELS = {
+              mvn4:  /^(master|main|feature\/.+)$/,
+              mvn40: /^maven-4\.0\.x$/,
+              mvn3:  /^maven-3\.\d+\.x$/,
+            };
+
+            const existingLabels = pr.labels.map(l => l.name);
+            core.info(`Existing labels: ${existingLabels.join(', ') || '(none)'}`);
+
+            const labelsToAdd = new Set();
+
+            for (const [label, pattern] of Object.entries(VERSION_LABELS)) {
+              if (pattern.test(base) && !existingLabels.includes(label)) {
+                labelsToAdd.add(label);
+                core.info(`Version label: ${label} (base branch: ${base})`);
+                break;  // exactly one version label
+              }
+            }
+
+            // ── 2. LLM-assisted: type + backport labels ───────────────────────────
+            const token = process.env.LLMAO_TOKEN;
+            if (!token) {
+              core.info('LLMAO_TOKEN not set — skipping LLM classification.');
+            } else {
+              const model = process.env.LLMAO_MODEL || 'gpt-4o-mini';
+
+              // Fetch the full PR (payload body may be truncated for large descriptions)
+              const { data: fullPr } = await github.rest.pulls.get({
+                owner, repo, pull_number: prNumber,
+              });
+
+              const prompt = [
+                'You are a Maven project maintainer. Classify the following pull request and assign labels.',
+                '',
+                'Available labels and when to use them:',
+                '  bug           - fixes incorrect or broken behavior',
+                '  enhancement   - adds new functionality or meaningfully improves existing behavior',
+                '  maintenance   - refactoring, cleanup, test additions, comment removal, dependency bumps',
+                '  documentation - pure documentation or comment changes',
+                '  breaking      - introduces a breaking API or behavior change',
+                '  backport-to-4.0.x   - this bug fix on master/main should also be applied to the maven-4.0.x branch',
+                '  backport-to-3.10.x  - this bug fix on master/main should also be applied to the maven-3.10.x branch',
+                '',
+                'Rules:',
+                '- Pick exactly ONE type label (bug / enhancement / maintenance / documentation).',
+                '- Add "breaking" only if the change breaks existing API or behavior.',
+                '- Add backport labels ONLY for bug fixes whose base branch is master or main,',
+                '  and only when the buggy code plausibly exists in the older branch too.',
+                '- Respond with ONLY a JSON array of label strings, no explanation.',
+                '  Example: ["bug","backport-to-4.0.x"]',
+                '',
+                `PR title: ${fullPr.title}`,
+                `Base branch: ${base}`,
+                `Body:\n${(fullPr.body || '').slice(0, 3000)}`,
+              ].join('\n');
+
+              try {
+                const resp = await fetch('https://llm.apache.org/v1/chat/completions', {
+                  method: 'POST',
+                  headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify({
+                    model,
+                    messages: [{ role: 'user', content: prompt }],
+                    max_tokens: 80,
+                    temperature: 0,
+                  }),
+                });
+
+                if (!resp.ok) {
+                  core.warning(`llm.apache.org returned HTTP ${resp.status} — skipping LLM labels.`);
+                } else {
+                  const data = await resp.json();
+                  const text = data.choices?.[0]?.message?.content?.trim() ?? '';
+                  core.info(`LLM raw response: ${text}`);
+
+                  // Strip markdown code fences if the model wraps the JSON
+                  const cleaned = text.replace(/^```[a-z]*\n?/, '').replace(/\n?```$/, '').trim();
+
+                  let suggested;
+                  try {
+                    suggested = JSON.parse(cleaned);
+                  } catch (_) {
+                    core.warning(`Could not parse LLM response as JSON: ${text}`);
+                    suggested = [];
+                  }
+
+                  // Allowlist — never let the LLM assign arbitrary labels
+                  const ALLOWED = new Set([
+                    'bug', 'enhancement', 'maintenance', 'documentation', 'breaking',
+                    'backport-to-4.0.x', 'backport-to-3.10.x',
+                  ]);
+
+                  for (const label of suggested) {
+                    if (ALLOWED.has(label) && !existingLabels.includes(label)) {
+                      labelsToAdd.add(label);
+                    } else if (!ALLOWED.has(label)) {
+                      core.warning(`Ignoring label not on allowlist: ${label}`);
+                    }
+                  }
+                }
+              } catch (err) {
+                core.warning(`LLM call failed: ${err.message} — skipping LLM labels.`);
+              }
+            }
+
+            // ── 3. Apply ──────────────────────────────────────────────────────────
+            if (labelsToAdd.size === 0) {
+              core.info('No new labels to add.');
+              return;
+            }
+
+            const labels = [...labelsToAdd];
+            core.info(`Applying labels: ${labels.join(', ')}`);
+            await github.rest.issues.addLabels({
+              owner, repo,
+              issue_number: prNumber,
+              labels,
+            });
