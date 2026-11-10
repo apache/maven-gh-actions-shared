@@ -41,7 +41,7 @@ on:
 jobs:
   repos:
     name: Prepare repositories list
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     outputs:
       matrix: ${{ steps.repo.outputs.matrix }}
 
@@ -57,7 +57,7 @@ jobs:
           cat "$GITHUB_OUTPUT"
 
   label-sync:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     needs: repos
     strategy:
       fail-fast: false
