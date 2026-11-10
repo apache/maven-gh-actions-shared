@@ -142,11 +142,6 @@ module.exports = [
         description: "Inactive; will be closed soon unless there is new activity"
     },
     {
-        name: "hacktoberfest-accepted",
-        color: "51F693",
-        description: "Opts this pull request into Hacktoberfest"
-    },
-    {
         name: "security",
         color: "7B1FA2",
         description: "Security issue or fix. Report undisclosed vulnerabilities to security@apache.org, not here."
