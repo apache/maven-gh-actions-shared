@@ -12,13 +12,27 @@ github:
     squash: true
     merge: false
     rebase: true
-  protected_branches:
-    main: { }
-    v1: { }
-    v2: { }
-    v3: { }
-    v4: { }
-    v5: { }
+  rulesets:
+    - name: "Branch Protection"
+      type: branch
+      branches:
+        includes:
+          - "~DEFAULT_BRANCH"
+          - "v5"
+    - name: "Read-only Branches"
+      target: branch
+      enforcement: active
+      conditions:
+        ref_name:
+          include:
+            - "refs/heads/v1"
+            - "refs/heads/v2"
+            - "refs/heads/v3"
+            - "refs/heads/v4"
+          exclude: []
+      rules:
+        - type: deletion
+        - type: update
   pull_requests:
     del_branch_on_merge: true
   features:
